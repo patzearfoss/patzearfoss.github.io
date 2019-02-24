@@ -1,0 +1,46 @@
+---
+layout: post
+title: A Cool KVO Trick
+date: 2011-11-29 10:31:25.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- Tips
+tags:
+- cocoa
+- KVO
+- objective-c
+- observiing
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1362030821;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>A coworker of mine attended the Voices that Matter conference in Boston a couple of weeks ago and shared this idea about KVO observing from <a href="http://www.mikeash.com/pyblog/">Mike Ash</a> during his <a href="http://ios2011.voicesthatmatter.com/talks/20553">Defensive Programming</a> talk.  He suggests supplying a static pointer to the context parameter:</p>
+<p>[code language="objc"]</p>
+<p>static void *p = &amp;p;</p>
+<p>[someObj addObserver:self forKeyPath:@&quot;aPath&quot; options:NSKeyValueObservingOptionNew context:p];</p>
+<p>// ...</p>
+<p>- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context<br />
+{<br />
+    if (context == p)<br />
+    {<br />
+        // do stuff<br />
+    }<br />
+    else<br />
+    {<br />
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];<br />
+    }<br />
+}<br />
+[/code]</p>
+<p>Seems like a lot of magic at first, but by specifying a context every time and using one that's not only unique to your object but also to the file containing your subclass you can ensure that the message sent to you is actually for you and you avoid potentially stepping on the toes of your super class. Neat stuff!  It's also worth noting that checking the context pointer first is a super-fast way to see if you need to care about the observation method.</p>
+<p><strong>Side note:</strong> if you're not subscribed to Mike Ash's Friday Q&amp;A blog (link above), you definitely should. I learn something new there every week.</p>

@@ -1,0 +1,121 @@
+---
+layout: post
+title: More CADisplayLink
+date: 2011-09-02 07:00:18.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+tags:
+- CADisplayLink
+- coreanimation
+- drawing
+- UIView
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1423580521;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Hello to everyone coming from <a title="iDevBlogADay" href="http://idevblogaday.com/">iDevBlogADay</a>!</p>
+<p>Since this is my first post to be pulled into the site, I'll take just a quick moment to introduce myself.  My name is Pat Zearfoss and I'm one of the lead iOS developers at <a href="http://www.mindgrub.com">Mindgrub Technologies</a>, a development shop in Baltimore, MD, USA.  We're primarily a work-for-hire shop, but we do have a couple products we've released on our own.  I've been working on iOS since the SDK became public and because of the nature of my work at Mindgrub, I've had the opportunity to work on a variety of projects, large and small.</p>
+<p>This site is a collection of thoughts on iOS development, usually spurned from a project I'm working on.  Lately I've been spending a lot of time in CoreAnimation, so as a result you'll find a lot on that topic.  I usually try to jot down things that weren't immediately obvious to me as I work through a project, usually figuring that if I had to really dig to find a solution, someone else probably will to.</p>
+<p>I was rattling my brain to try and come up with a good introductory topic for my first iDevBlogADay post and I eventually settled upon doing another post about CADisplayLink.  Not that this site gets a ton of traffic, but CADisplayLink tops my search terms daily.  Documentation around the web on it is scarce as it's a pretty niche topic, although highly useful when the animation you want to create in an iOS app is something not easily handled by transitions or stock animations.</p>
+<p>So what is a CADisplayLink.  Directly from <a href="http://developer.apple.com/library/ios/#documentation/QuartzCore/Reference/CADisplayLink_ClassRef/Reference/Reference.html">Apple</a>:</p>
+<blockquote><p>A <code>CADisplayLink</code> object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display.</p></blockquote>
+<p>CADisplayLink works very much like an NSTimer.  You can set it to call a method on every tick, but instead of setting a time interval, the time interval is determined by the screen's refresh rate.  When you're ready to use the display link you add it to the run loop, and the method you handed to it will fire until you call the "invalidate" method on it.  CADisplayLink lives in the QuartzCore framework.</p>
+<p><a title="Drawing with CADisplayLink" href="http://zearfoss.wordpress.com/2011/03/09/drawing-with-cadisplaylink/">In an earlier post</a>, I showed how to draw a simple line on a CALayer using CADisplayLink, drawing an additional pixel every time.  Today I'm going to show you how to draw a circle fanning out (similar to how the pie charts render in Mint.com) and setting a desired time duration for that animation. To get started, we're going to create a new project with a single view controller and UIView subclass.  Here's my project layout:</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/09/files.png"><img class="aligncenter size-full wp-image-219" title="files" src="{{ site.baseurl }}/assets/files.png" alt="" width="256" height="294" /></a></p>
+<p>We'll also need to add the QuartzCore framework to the project.  (Target settings -&gt; Build Phases):</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/09/libs.png"><img class="aligncenter size-medium wp-image-220" title="libs" src="{{ site.baseurl }}/assets/libs.png?w=300" alt="" width="300" height="170" /></a></p>
+<p>Next in viewDidLoad of our view controller, we need to create a new instance of our UIView subclass and add it to the view:</p>
+<p>[code language="objc"]</p>
+<p>- (void)viewDidLoad<br />
+{<br />
+    [super viewDidLoad];<br />
+    CircleDisplayView *circleView =<br />
+        [[CircleDisplayView alloc] initWithFrame:self.view.bounds];<br />
+    [self.view addSubview:circleView];<br />
+    [circleView release];<br />
+}</p>
+<p>[/code]</p>
+<p>Now onto our custom view. This is where we'll be using the CADisplayLink. Here's my .h file:</p>
+<p>[code language="objc"]<br />
+#import &lt;QuartzCore/QuartzCore.h&gt;</p>
+<p>@interface CircleDisplayView : UIView<br />
+{<br />
+    CADisplayLink *displayLink;</p>
+<p>    BOOL animationRunning;<br />
+    NSTimeInterval drawDuration;<br />
+    CFTimeInterval lastDrawTime;<br />
+    CGFloat drawProgress;<br />
+}<br />
+@end<br />
+[/code]</p>
+<p>Our view only needs to keep track of a couple things. First we need the CADisplayLink. We'll need to keep track of it during drawing.  We'll also need a flag to know whether our animation is running (animationRunning) and some variables to keep track of timestamps(lastDrawTime), the drawing progress (drawProgress), as well as the amount of time we want the animation to run for (drawDuration)</p>
+<p>In the initializer, all we'll need to do is get an instance of CADisplayLink and set the amount of time we want for the animation:</p>
+<p>[code language="objc"]<br />
+- (id)initWithFrame:(CGRect)frame<br />
+{<br />
+    self = [super initWithFrame:frame];<br />
+    if (self)<br />
+    {<br />
+        displayLink = [CADisplayLink displayLinkWithTarget:self<br />
+                                                  selector:@selector(setNeedsDisplay)];<br />
+        drawDuration = 3.0;<br />
+    }<br />
+    return self;<br />
+}<br />
+[/code]</p>
+<p>The method we'll be using in the CADisplayLink is simply setNeedsDisplay.  So, while the animation is running, on every tick of the display link we'll be asking the view to redraw itself.  All the magic then happens in drawRect:</p>
+<p>[code language="objc"]<br />
+- (void)drawRect:(CGRect)rect<br />
+{<br />
+    if (!animationRunning)<br />
+    {<br />
+        [displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];<br />
+        animationRunning = YES;<br />
+        return;<br />
+    }</p>
+<p>    if (lastDrawTime == 0)<br />
+    {<br />
+        lastDrawTime = displayLink.timestamp;<br />
+        return;<br />
+    }</p>
+<p>    CGContextRef ctx = UIGraphicsGetCurrentContext();<br />
+    CGContextSetFillColorWithColor(ctx, [[UIColor blueColor] CGColor]);</p>
+<p>    CFTimeInterval elapsedTime = displayLink.timestamp - lastDrawTime;<br />
+    NSLog(@&quot;elapsed %f&quot;, elapsedTime);</p>
+<p>    CGFloat radiansToDraw = drawProgress + ((2 * M_PI) / drawDuration) * elapsedTime;</p>
+<p>    NSLog(@&quot;drawing %f radians&quot;, radiansToDraw);</p>
+<p>    CGContextMoveToPoint(ctx, self.center.x, self.center.y);<br />
+    CGContextAddLineToPoint(ctx, self.center.x + 100, self.center.y);<br />
+    CGContextAddArc(ctx, self.center.x, self.center.y, 100, 0, radiansToDraw, 0);<br />
+    CGContextClosePath(ctx);<br />
+    CGContextFillPath(ctx);</p>
+<p>    lastDrawTime = displayLink.timestamp;<br />
+    drawProgress = radiansToDraw;</p>
+<p>    if (radiansToDraw &gt; 2 * M_PI)<br />
+    {<br />
+        NSLog(@&quot;Invalidate display link&quot;);<br />
+        [displayLink invalidate];<br />
+        animationRunning = NO;<br />
+        lastDrawTime = 0;<br />
+    }</p>
+<p>}<br />
+[/code]</p>
+<p>Most of this code is standard drawing code: adding lines and arcs, so I'm not going to go into great detail on those, but rather focus on the bits having to do with making the circle drawing occur progressively.</p>
+<p>The first thing to notice is that on the first (and second) pass through drawRect, no actual drawing occurs.  The first pass occurs when the view naturally tries to render itself.  On this pass all we need to do is add the displayLink to the run loop and return.</p>
+<p>Second pass we get caught in the second if statement, ensuring that we seed lastDrawTime.  We need only know about the differences in two display link timestamps, so this is necessary.</p>
+<p>Finally on the third pass we begin drawing.  It's important to remember that the whole view gets refreshed every pass of drawRect, so all we essentially need to do is add some radians to the arc drawn every pass.  When we notice that the amount of radians drawn exceeds 2π we know the circle is complete and reset the display link.</p>
+<p>And that's it!  If you run that code, you should see the circle fan out at a constant rate.  You could clearly make this slicker by seeding the display link on didAddToSuperview or adding an easing function to the calculation for radiansToDraw.  I hope this has been useful to some folks out there.  As always I'll post the code to <a href="https://github.com/pzearfoss/CircleDraw">github</a> so you can check it out.</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/09/final.png"><img class="aligncenter size-medium wp-image-221" title="final" src="{{ site.baseurl }}/assets/final.png?w=154" alt="" width="154" height="300" /></a></p>
+<p>Thanks and happy coding!</p>

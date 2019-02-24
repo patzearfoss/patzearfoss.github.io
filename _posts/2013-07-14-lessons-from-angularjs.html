@@ -1,0 +1,51 @@
+---
+layout: post
+title: Lessons from AngularJS
+date: 2013-07-14 23:25:48.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- Opinion
+- Tips
+- Tools
+tags:
+- angularJS
+- coding
+- ios
+- style
+meta:
+  _edit_last: '684115'
+  draftfeedback_requests: a:4:{s:19:"sraouf@mindgrub.com";a:3:{s:3:"key";s:13:"51cfaaf950e51";s:4:"time";s:10:"1372564217";s:7:"user_id";s:6:"684115";}s:18:"kenny@mindgrub.com";a:3:{s:3:"key";s:13:"51cfaaf95d082";s:4:"time";s:10:"1372564217";s:7:"user_id";s:6:"684115";}s:20:"cberlin@mindgrub.com";a:3:{s:3:"key";s:13:"51cfaaf968ec7";s:4:"time";s:10:"1372564217";s:7:"user_id";s:6:"684115";}s:20:"klandry@mindgrub.com";a:3:{s:3:"key";s:13:"51cfaaf974a3c";s:4:"time";s:10:"1372564217";s:7:"user_id";s:6:"684115";}}
+  geo_public: '0'
+  _publicize_pending: '1'
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>[caption id="" align="aligncenter" width="383"]<img alt="AngularJS" src="{{ site.baseurl }}/assets/AngularJS-large.png" width="383" height="108" /> AngularJS[/caption]</p>
+<p>The past two weeks I've been working on a web project using AngularJS.  Angular is a Javascript MVC framework with the backing of Google.  I always enjoy taking some time to learn a new language or tool from time to time.  As iOS developers I think there's a couple of concepts we could learn from Angular.</p>
+<h1>Bindings - Bindings everywhere.</h1>
+<p>One of the first thing you learn in Angular development is its two way binding system.  Placing a binding in your HTML template is dead simple; simply enclose the variable in the handlebars: {{myvar}} or link it via the ng-model attribute on an input tag.  The binding is two way such that changing the value of a text field will update that in your model.</p>
+<p>Unfortunately iOS is often much more difficult and manual when it comes to keeping your model and UI in sync.  MacOS provides bindings to developers but there's no once and done solution for iOS.  However binding is not difficult to implement using KVO.  KVO has its downside when it comes to performance, but it may be worth it for the simplicity.  I haven't tried to implement it myself to be able to tell.</p>
+<h1>Thin models; thin controllers</h1>
+<p>Angular makes very few assumptions about what your model in the MVC way of thinking is.  In fact, the model for any controller is expected to be a special variable called the $scope.  The $scope object is provided by the controller, whose entire job is to do nothing but populate the scope.  Compared to iOS view controllers, Angular controllers are extremely light.</p>
+<p>iOS view controllers have a bad habit of being very involved in both in view-ish things and model-ish things, as well as its dictated function of handing controller-ish things.  How many times have you managed a view directly in your view controller as well as managed changes back to the model?  Probably a lot.  One of the downsides of UIViewController is that they often wind up being behemoth and barely manageable monster objects. Angular's documentation strongly advises that you don't make changes to the DOM (the literal view of a web application) from within the controller, delegating those tasks elsewhere.  The result is a very simple controller that does its job of exposing the model to the view well and without needless other operations.</p>
+<h1>Greater separation of the view and the controller</h1>
+<p>Web applications have an inherently strong presentation layer: the HTML and CSS that handles display in the browser.  In Angular style, the HTML provides structure of a view, CSS provides the presentation of the view, and Angular does the job of providing data to the view.  As mentioned above it's all too common in an iOS application to jam all this functionality into a single view controller.</p>
+<p>It's not a stretch to say that UIViewControllers are often required to do far too much for any non-trivial application.  A view controller might be responsible for loading data from somewhere, maybe through an NSURLConnection, doing any formatting or transformation of the data, creating a view in loadView: and laying all the pieces out.  It may also be the datasource and delegate for a table view providing cells and handling cell selection.  After all of that it might also be accepting event callbacks from UI controls and altering the model appropriately.  That's a huge set of tasks and I'm as guilty as anyone of writing multi-thousand line view controllers.</p>
+<h1>Applying the lessons</h1>
+<p>So how should we break up a UIViewController subclass into more manageable chunks?  I think Angular presents a couple of ideas.</p>
+<ol>
+<li>The most simple task is to separate the model related concerns of a UIViewController from its view related concerns.  In iOS development you need to have view controllers, but there's no rule that you can have other controllers to handle other tasks.  NSFetchedResultsController provides a great example of a way to separate the needs of dealing with CoreData from the other responsibilities of the view controller.</li>
+<li>Relegate the UIViewController subclass to what its name implies:  management of the view.  Offload data related concerns to a custom defined model controller.</li>
+<li>Make views a little smarter.  HTML and CSS provide a natural separation between controllers and views.  Interface builder is one of the best tools and iOS developer has but there's no reason we can't make smarter views that know more about it's layout and the properties of it's subviews.  If reuse is concern there's nothing wrong with the root view of a view controller being a custom subclass that arranges other pre-made components.</li>
+<li>Attempt bindings using KVO.  You could easily inject a transformer into the mix for formatting.</li>
+</ol>
+<p>Fully realizing these are all a little abstract right now I'm planning to take a concrete stab at these in some future posts.  For now the takeaway is that learning a different way of doing things can always open your eyes to some better ideas in your current workflow.</p>

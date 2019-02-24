@@ -1,0 +1,118 @@
+---
+layout: post
+title: Drawing with CADisplayLink
+date: 2011-03-09 09:28:56.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- CADisplayLink
+- calayer
+- coreanimation
+- drawing
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1316776836";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>For 90% of the animations you'll ever need to do CoreAnimation or UIView animations are enough.  Sometimes, the thing you want to animate can't be handled by simple property based transitions or by moving an object along a path.  Enter CADisplayLink:</p>
+<p>From the CADisplayLink class reference:</p>
+<blockquote><p>A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display.</p></blockquote>
+<p>The purposes that I need, I want to animate a circle similarly to how flex charts draws pie charts (a "swipe open" kind of animation).  For the demo, though, I'll simply use the CADisplayLink to animate a line extending across the screen on a CALayer using it's drawInContext: method.</p>
+<p>First the main view that contains my CALayer subclass:</p>
+<p>[code language="objc"]<br />
+//  MainView.h</p>
+<p>#import &lt;UIKit/UIKit.h&gt;<br />
+#import &lt;QuartzCore/QuartzCore.h&gt;<br />
+#import &quot;AnimationLayer.h&quot;</p>
+<p>@interface MainView : UIView<br />
+{<br />
+    AnimationLayer *alayer;<br />
+}</p>
+<p>@end<br />
+[/code]</p>
+<p>[code language="objc"]<br />
+//  MainView.m</p>
+<p>#import &quot;MainView.h&quot;</p>
+<p>@implementation MainView</p>
+<p>- (id)initWithFrame:(CGRect)frame<br />
+{<br />
+    self = [super initWithFrame:frame];<br />
+    if (self) {<br />
+        // Initialization code<br />
+    }<br />
+    return self;<br />
+}</p>
+<p>- (void)didMoveToSuperview<br />
+{<br />
+    if ([self superview])<br />
+    {</p>
+<p>        alayer = [[AnimationLayer alloc] init];<br />
+        alayer.frame = self.frame;<br />
+        [self.layer addSublayer:alayer];</p>
+<p>    }<br />
+}</p>
+<p>[/code]</p>
+<p>And next the CALayer that will be animated:<br />
+[code language="objc"]<br />
+//  AnimationLayer.h</p>
+<p>#import &lt;Foundation/Foundation.h&gt;<br />
+#import &lt;QuartzCore/QuartzCore.h&gt;</p>
+<p>@interface AnimationLayer : CALayer<br />
+{<br />
+    CADisplayLink *displayLink;<br />
+}</p>
+<p>@end<br />
+[/code]</p>
+<p>[code language="objc"]<br />
+//  AnimationLayer.m<br />
+#import &quot;AnimationLayer.h&quot;</p>
+<p>static bool _running;</p>
+<p>@implementation AnimationLayer</p>
+<p>- (id)init<br />
+{<br />
+    self = [super init];<br />
+    if (self)<br />
+    {<br />
+        displayLink = [[CADisplayLink displayLinkWithTarget:self selector:@selector(setNeedsDisplay)] retain];<br />
+        [self setNeedsDisplayOnBoundsChange:YES];<br />
+    }</p>
+<p>    return self;<br />
+}</p>
+<p>static CGPoint lastPoint = {0, 0};<br />
+- (void)drawInContext:(CGContextRef)ctx<br />
+{<br />
+    if (!_running)<br />
+    {<br />
+        [displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];<br />
+        _running = YES;<br />
+        return;<br />
+    }</p>
+<p>    CGContextSetStrokeColorWithColor(ctx, [[UIColor blackColor] CGColor]);</p>
+<p>    CGRect rect = CGContextGetClipBoundingBox(ctx);</p>
+<p>    CGContextMoveToPoint(ctx, 0, 0);<br />
+    lastPoint.x = lastPoint.y += 1;<br />
+    CGContextAddLineToPoint(ctx, lastPoint.x, lastPoint.y);<br />
+    CGContextStrokePath(ctx);</p>
+<p>    if (lastPoint.x == rect.size.width)<br />
+    {<br />
+        [displayLink invalidate];<br />
+        _running = NO<br />
+    }<br />
+}</p>
+<p>@end</p>
+<p>[/code]</p>
+<p>The main view is pretty uninteresting as it only creates a new CALayer and adds it as a sublayer of itself.  </p>
+<p>The animation layer holds the CADisplayLink as an Ivar and initializes it with the layer's drawInContext: method.  </p>
+<p>We need some kind of flag to tell the CADisplayLink when to stop updating, for this I used a static BOOL _running.  On the first pass of drawInContext, we'll add the display link to the main run loop, at which point it will start calling the specified selector.  We'll set the _ruinning flag to true and return.  On every subsequent pass of drawInContext: we'll draw a longer line running diagonally.  At the end we'll check the condition to invalidate the CADisplayLink; in this case I'll check to see whether the line has fully crossed the screen.  Once we invalidate the display link the animation will stop.</p>
+<p>This is a simple example, but it shows how you can animate an object using pure drawing for the times when property animations simply won't do.</p>

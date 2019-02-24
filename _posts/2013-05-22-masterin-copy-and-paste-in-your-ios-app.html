@@ -1,0 +1,83 @@
+---
+layout: post
+title: Mastering Copy and Paste in iOS - Part 1
+date: 2013-05-22 09:26:32.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- Tutorials
+tags:
+- copy and paste
+- iosDev
+- UIResponder
+- UITextField
+- UITextView
+meta:
+  _edit_last: '684115'
+  draftfeedback_requests: a:4:{s:19:"sraouf@mindgrub.com";a:3:{s:3:"key";s:13:"51998a05a2996";s:4:"time";s:10:"1369016837";s:7:"user_id";s:6:"684115";}s:20:"cberlin@mindgrub.com";a:3:{s:3:"key";s:13:"51998a064647a";s:4:"time";s:10:"1369016838";s:7:"user_id";s:6:"684115";}s:18:"kenny@mindgrub.com";a:3:{s:3:"key";s:13:"51998a067d2d2";s:4:"time";s:10:"1369016838";s:7:"user_id";s:6:"684115";}s:20:"klandry@mindgrub.com";a:3:{s:3:"key";s:13:"519a2bf8d2b4f";s:4:"time";s:10:"1369058296";s:7:"user_id";s:6:"684115";}}
+  draft_feedback: "a:2:{s:18:\"kenny@mindgrub.com\";a:1:{i:0;a:2:{s:4:\"time\";s:10:\"1369052532\";s:7:\"content\";s:251:\"I
+    think you forgot to add the compiler warning text, it just says, \"the following
+    compiler warning.\" \n\nOtherwise looks good. Might be useful for the reader to
+    know that the categories won't have an effect on text views displayed from within
+    a webview.\";}}s:20:\"klandry@mindgrub.com\";a:1:{i:0;a:2:{s:4:\"time\";s:10:\"1369094574\";s:7:\"content\";s:908:\"This
+    seems good overall.  Nitpicks follow. \n\n5th para missing 'a'?  \"with simple
+    drawing sample app.\"\n\nfirst sentence under Locking down copy and paste has
+    a double period.  \n\nAlso in that para, system wide is not hyphenated but you
+    hyphenated in your intro.\n\nAlso in that para, \"In preparing\" is incorrectly
+    punctuated (missing a comma, and adding that in would make the comma before the
+    but a semi-colon).  I'd leave it as-is (only English majors would care and it's
+    readable)but pointing it out.\n\nLast two sentences in that para change to past
+    tense.  It's not incorrect, but everything else is in present tense so it's a
+    little disorienting.  Feels like there's background missing (when you say \"sample
+    code for this\" do you mean this blog post?)\n\nPersonal nitpick:  in your last
+    example, I find the code in the middle of the sentence jarring.  But I'm not a
+    programmer, so go with whatever's standard.\n\n\";}}}"
+  _publicize_pending: '1'
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>System wide copy and paste is built into most of the stock iOS controls without the developer having to do any extra work to enable the feature.  Sometimes for security purposes you may wish to lock down the functionality (to not allow copy and paste at all) or disallow copying and pasting between your app and other apps that may be on the device.  Restricting this functionality is a pretty common requirement for the growing market of security frameworks out there for enterprise applications such as <a title="GOOD Dynamics" href="http://www1.good.com/platform/mobile-application-security">GOOD</a> and <a title="MobileIron" href="http://www.mobileiron.com/">MobileIron</a>.  They commonly refer to this as "data leakage".</p>
+<p>In this 3-part series I'll explore the copy and paste system in iOS and how you can use it to fit the needs of your specific application.</p>
+<p>This first part will focus on locking down the copy and paste system completely.</p>
+<p>In the <a title="Mastering Copy and Paste in iOS – Part 2" href="http://zearfoss.wordpress.com/2013/06/02/mastering-copy-and-paste-in-ios-part-2/">second part</a> I'll show you how you can create an application specific pasteboard to allow copy and paste within your own application while still preventing data leakage to other apps as well as posting other types of data to UIPasteboard.</p>
+<p>In the third part I'll explore other types of data on the pasteboard with simple drawing sample app.</p>
+<h2>Locking down copy and paste</h2>
+<p>All controls in UIKit expose a single method you can override to control actions such as copy and paste..  To lock down system wide we really only need to implement a category on the specific controls.  In preparing the sample code for this I attempted a category on UIResponder, but that seems to have unintended side effects. Adding it to the classes directly seemed to be the most consistent approach.</p>
+<p>At a high level you'll want to use code like this:</p>
+<p>[code language="objc"]<br />
+@interface UITextField (lockdown) @end<br />
+@implementation UITextField (lockdown)<br />
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender<br />
+{<br />
+    SEL copy = @selector(copy:);<br />
+    SEL cut = @selector(cut:);<br />
+    SEL paste = @selector(paste:);<br />
+    if (action == copy ||<br />
+        action == cut ||<br />
+        action == paste)<br />
+    {<br />
+        return NO;<br />
+    }<br />
+    return YES;<br />
+}<br />
+@end<br />
+[/code]</p>
+<p>You can find the sample code for this <a title="lockdown example on Github" href="https://github.com/pzearfoss/lockdown">here</a> that will lock down UITextField, UITextView, and UISearchBar.  Remember that since this method exists on UIResponder, you can use it to lock down any control, even complex ones like UIWebView.</p>
+<p>One more note:</p>
+<p>When you first implement this you may notice that you get a compiler warning about reimplementing a method in a category that already has an implementation elsewhere.</p>
+<p>You can prevent this code by wrapping it in the following:</p>
+<p>[code language="objc"]<br />
+#pragma clang diagnostic push<br />
+#pragma clang diagnostic ignored &quot;-Wobjc-protocol-method-implementation&quot;<br />
+// ...<br />
+#pragma clang diagnostic pop<br />
+[/code]</p>
+<p>Be sure to check out part 2 of this series for digging deeper into copy and paste and the UIResponderStandardEditActions protocol.</p>

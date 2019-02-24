@@ -1,0 +1,85 @@
+---
+layout: post
+title: A Quick Gotcha About Blocks
+date: 2012-05-11 09:28:39.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+tags:
+- blocks
+- memory management
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1510019845;}
+  _oembed_20fc5d8316a5a9fce635fc39c0e7c55f: "{{unknown}}"
+  _oembed_18b8c5c1976904e982dd7d40f5f95f34: "{{unknown}}"
+  _oembed_25291cc9d4468605a65e2b64f96c5a63: "{{unknown}}"
+  _oembed_bcc72507d9e60f7d3c0e70037e854f85: "{{unknown}}"
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Blocks are a great addition to the iOS SDK and C standard, especially for predominantly event driven applications as we commonly see on the iPhone and iPad.  There's a quick gotcha that a junior developer here at Mindgrub reminded me of the other day.</p>
+<p>While blocks are a powerful tool, if you're not careful they can start to degrade the quality of your app by introducing retain cycles.  Retain cycles occur when two objects in your application keep strong references to one another.  Take the common table view for example.  Ordinarily, the view controller containing (owning) the table view acts as the datasource and delegate for table, providing the necessary information for displaying the number of rows and supplying cell objects.  If you look closely at the properties on UITableView for datasource and delegate, you'll see that both properties are declared as "assign" or "weak" in ARC.  This is critical particularly in the case where the view controller is also the datasource/delegate.  If the properties were "strong" or "retain" you could easily wind up in a retain cycle where neither your UITableView nor your view controller would ever be destroyed, thereby leaking memory.</p>
+<p>This can happen with blocks as well and it's not always so obvious.  Let's say we have a view for which we define a block to handle the user tapping it.  The code might look something like this:</p>
+<p>[code language="objc"]</p>
+<p>#import &lt;UIKit/UIKit.h&gt;</p>
+<p>typedef void(^TapBlock)(void);</p>
+<p>@interface TapBlockView : UIView<br />
+{<br />
+   TapBlock tapBlock;<br />
+}</p>
+<p>@property (nonatomic, copy) TapBlock tapBlock;<br />
+@end</p>
+<p>@implementation TapBlockView<br />
+@synthesize tapBlock;<br />
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event<br />
+{<br />
+   tapBlock();<br />
+}</p>
+<p>- (void)dealloc<br />
+{<br />
+   [tapBlock release];<br />
+   [super dealloc];<br />
+}</p>
+<p>@end<br />
+[/code]</p>
+<p>This is a very convenient way of setting up delegate style behavior without having to litter your code with lots of protocol definitions.  Now an example of using the view in a view controller:</p>
+<p>[code language="objc"]<br />
+- (void)viewDidLoad<br />
+{<br />
+    [super viewDidLoad];<br />
+    tapBlockView = [[TapBlockView alloc] initWithFrame:CGRectZero];<br />
+    [tapBlockView setTapBlock:^(void) {<br />
+        self.someLabel.text = @&quot;You tapped it!&quot;;<br />
+    }];<br />
+}<br />
+[/code]</p>
+<p>Everything seems fine right?  Nice and convenient. </p>
+<p>Not so fast. </p>
+<p>Blocks automatically scope capture and retain any object types you use in the block.  In this case that variable is "self".  Now we have a retain cycle since self owns the tap view which owns the block <strong>which now owns self.</strong></p>
+<p>According to Mike Ash, the correct way to handle this is to use a weak pointer (assign) in the block like this:</p>
+<p>[code language="objc"]<br />
+- (void)viewDidLoad<br />
+{<br />
+    [super viewDidLoad];<br />
+    tapBlockView = [[TapBlockView alloc] initWithFrame:CGRectZero];<br />
+    __block typeof (self) weakself = self;<br />
+    [tapBlockView setTapBlock:^(void) {<br />
+        weakself.someLabel.text = @&quot;You tapped it!&quot;;<br />
+    }];<br />
+}<br />
+[/code]</p>
+<p>By using a weak, nonretained pointer along with the __block modifier we've broken the retain cycle.  For ARC code you should use __weak instead of __block.  </p>
+<p>There's two important lessons to be pulled from this.  The first is that you always have to be aware of the code you're writing and look for subtle retain cycles like this one.  No amount of automatic reference counting magic can help you in some of these scenarios.  The second is that it's always good to look at code written by others on your team because there's nearly always something new to learn to refresh on, even if you're one of the more seasoned developers and the code you're reading is from a junior dev.  </p>
+<p>For more information check out these two articles on <a href="http://www.mikeash.com/pyblog/">Mike Ash's Friday Q&amp;A Site</a>:<br />
+<a href="http://www.mikeash.com/pyblog/friday-qa-2011-09-30-automatic-reference-counting.html">9/30/2011 - Automatic Reference Counting</a><br />
+<a href="http://www.mikeash.com/pyblog/friday-qa-2010-04-30-dealing-with-retain-cycles.html">4/30/2010 - Dealing With Retain Cycles</a></p>

@@ -1,0 +1,37 @@
+---
+layout: post
+title: CABasicAnimation Interpolation
+date: 2011-02-25 13:28:46.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- coreanimation
+- ios
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1312278636";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>In my previous post, I detailed how you have to specify to and from values for a basic animation on a property.  Using those two values, the animation <em>should</em> be able to interpolate the actual values of a property at any point.  </p>
+<p>[sourcecode language="objc"]<br />
+CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@&quot;position&quot;];<br />
+animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];<br />
+animation.delegate = self;<br />
+animation.fromValue = [NSValue valueWithCGPoint:layer.position];<br />
+// move the x position by delta<br />
+animation.toValue = [NSValue valueWithCGPoint:CGPointMake(layer.position.x + delta, layer.position.y)];</p>
+<p>// later during the animation<br />
+NSValue *currentValue = [(CABasicAnimation *)[aLayer animationForKey:@&quot;position&quot;] byValue];<br />
+[/sourcecode]</p>
+<p>For some reason, this doesn't work, and you have to grab the value from the presentation layer instead.</p>

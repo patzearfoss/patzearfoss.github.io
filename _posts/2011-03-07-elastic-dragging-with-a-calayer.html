@@ -1,0 +1,99 @@
+---
+layout: post
+title: Elastic dragging with a CALayer
+date: 2011-03-07 22:17:23.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- coreanimation
+- drag-and-drop
+- objective-c
+- UITouch
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1316776803";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>You'll notice when you pull beyond the bounds of a UITableView that the table view appears spring loaded before jumping back when you lift your finger off the device.  I posted a project to GitHub that illustrates something similar using a CALayer and the UITouch event handlers on UIView.  </p>
+<p>There's a few strange things I did using a category on UIWindow to handle the touch events, but you could implement the same functionality on any UIView.  The important things are the touch callbacks which are posted below.</p>
+<p>[sourcecode language="objc"]<br />
+static BOOL tapOnImageLayer;<br />
+static CGPoint initialPosition;<br />
+static float velocity = 900; // px / sec</p>
+<p>- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event<br />
+{<br />
+    if (tapOnImageLayer)<br />
+    {<br />
+        CALayer *imageLayer = [(elasticAppDelegate_iPhone *)[UIApplication sharedApplication].delegate imageLayer];</p>
+<p>        CGFloat distance = CGPointDistance(initialPosition, imageLayer.position);</p>
+<p>        NSTimeInterval time = distance / velocity;<br />
+        NSLog(@&quot;%f %f&quot;, distance, time);<br />
+        [CATransaction begin];<br />
+        [CATransaction setDisableActions:NO];<br />
+        [CATransaction setAnimationTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];<br />
+        [CATransaction setAnimationDuration:time];</p>
+<p>        imageLayer.position = initialPosition;</p>
+<p>        [CATransaction commit];</p>
+<p>        tapOnImageLayer = NO;<br />
+    }<br />
+}<br />
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event<br />
+{<br />
+    UITouch *t = [touches anyObject];<br />
+    CALayer *layer = [self.layer hitTest:[t locationInView:self]];<br />
+    if (layer == [(elasticAppDelegate_iPhone *)[UIApplication sharedApplication].delegate imageLayer])<br />
+    {<br />
+        tapOnImageLayer = YES;<br />
+        initialPosition = layer.position;</p>
+<p>    }<br />
+    else<br />
+    {<br />
+        tapOnImageLayer = NO;<br />
+    }<br />
+}</p>
+<p>- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event<br />
+{<br />
+    UITouch *touch = [touches anyObject];<br />
+    if (tapOnImageLayer)<br />
+    {<br />
+        CALayer *imageLayer = [(elasticAppDelegate_iPhone *)[UIApplication sharedApplication].delegate imageLayer];</p>
+<p>        CGSize delta = CGSizeMake([touch locationInView:self.window].x - initialPosition.x,<br />
+                                  [touch locationInView:self.window].y - initialPosition.y);</p>
+<p>        [CATransaction begin];<br />
+        [CATransaction setDisableActions:YES];</p>
+<p>        imageLayer.position = CGPointOffset(initialPosition, CGSizeMultiplyScalar(delta, 0.7));</p>
+<p>        [CATransaction commit];<br />
+    }<br />
+}<br />
+[/sourcecode]</p>
+<p>The important parts are setting the desired spring back velocity in line 3, and scaling the drag position in line 56.  There are a couple of convenience functions for working with the CGFoundation types:</p>
+<p>[sourcecode lanaguge="objc"]<br />
+CGPoint CGPointOffset (CGPoint point1, CGSize delta)<br />
+{<br />
+    CGPoint p;<br />
+    p.x = point1.x + delta.width;<br />
+    p.y = point1.y + delta.height;</p>
+<p>    return p;<br />
+}</p>
+<p>CGFloat CGPointDistance (CGPoint p1, CGPoint p2)<br />
+{<br />
+    CGFloat dx = p1.x - p2.x;<br />
+    CGFloat dy = p1.y - p2.y;</p>
+<p>    return sqrtf(dx * dx + dy * dy);<br />
+}</p>
+<p>CGSize CGSizeMultiplyScalar (CGSize p, CGFloat scalar)<br />
+{<br />
+    return CGSizeMake(p.width * scalar, p.height * scalar);<br />
+}<br />
+[/sourcecode]</p>
+<p>I'll post this and the other code I've done on Github shortly (I'm pretty new to it and still trying to figure it out!)</p>

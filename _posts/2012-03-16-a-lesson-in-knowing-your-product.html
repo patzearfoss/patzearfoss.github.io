@@ -1,0 +1,33 @@
+---
+layout: post
+title: A Lesson In Knowing Your Product
+date: 2012-03-16 00:43:39.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Apps
+- idevblogaday
+- Other
+tags:
+- antipatterns
+- libraries
+- products
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1424436649;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p><img class="size-full wp-image-352 alignleft" style="border-color:initial;border-style:initial;" title="515MB73RW3L._SL500_AA240_" src="{{ site.baseurl }}/assets/515mb73rw3l-_sl500_aa240_.jpg" alt="" width="240" height="240" />Long ago, in my first year at <a title="We make great mobile apps in Baltimore." href="http://www.mindgrub.com" target="_blank">Mindgrub</a> we were contracted to work on a community site that circled around creating a sense of nostalgia.  You could go in and become fans (or something) of things from your 80s childhood.  The site details really aren't important, and I'm not even sure if the site is even still around anymore.  Regardless, we were working with other far flung contractors to bring this whole nugget together, and it wasn't happening.  At all.</p>
+<p>I remember sitting in weekly conference calls discussing the merit of the PHP site architecture, templating systems, database backends.  Tons of nitty gritty details that really had absolutely nothing to do with creating a community site.  Phrases like "so when when we're done the templating system will work just like smarty" were uttered often (clarification: not by us, we were only making some javascript widgets).  Usually someone would follow with "then why the fuck aren't we using smarty?".   I recall this verbatim.</p>
+<p>The situation continued to spiral into more and more delays as we trudged along. There eventually was a call between our CEO and theirs where our CEO asked why they're so focused on software development when what they were trying to build was a community site, <strong>not</strong> a software system.  I imagine the silence was deafening.</p>
+<p>It was a bad case of "not invented here" syndrome.  Symptoms include burning tons of time and energy on something that quite simply has A) already been done, B) probably better and better tested than you could do it, and C) completely ancillary to your core business.</p>
+<p>That conversation came ringing back all to true to me on a recent project.  We were looking to add a rich PDF viewer to an app with paging, zooming, and all the other bells and whistles.  For a few days I looked on the internet, found some sample code, and toyed with some of the Apple examples for displaying PDFs.  I got something that worked, sort of.  One stray rotation of the device could throw the whole thing out of whack.  I was trying to avoid having to pay for a library that does all these.  Then it hit me.  The goal of the app was not to display PDFs, it was merely one facet of it.  I has already been done, better than I could have done it in the time we had to do it.  Displaying PDFs was not the business goal of this application.  I was doing nobody any good by continuing to churn on it.</p>
+<p>The lesson here is to know what your product is, whether it belongs to you or you're ultimately helping someone else create theirs.  It's always important to recognize that using a well tested pay-for component might just the thing you need to add the value you were looking for and get everyone back to focusing on what's really important.</p>

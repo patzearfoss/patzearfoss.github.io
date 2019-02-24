@@ -1,0 +1,137 @@
+---
+layout: post
+title: Using an NSDictionary for storing a matrix of values
+date: 2011-02-28 22:48:05.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- NSDictionary
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1316776821";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>For a recent project I needed to store a matrix of data.  My only requirement was that access would be fast given a row and column designation.  Unfortunately, the usual approach of using arrays of arrays wouldn't work because of how NSArray works.  From the Apple documentation for NSMutableArray:</p>
+<blockquote><p>
+Note that NSArray objects are not like C arrays. That is, even though you specify a size when you create an array, the specified size is regarded as a “hint”; the actual size of the array is still 0. This means that you cannot insert an object at an index greater than the current count of an array.
+</p></blockquote>
+<p>I could have used C arrays, but I wanted something more flexible when it comes to size and I didn't necessarily need the contiguous memory.  Constant time access was good enough.  </p>
+<p>NSDictionaries provide constant time access, and the only requirements for keys are that the object used conform to NSCoding and implement a hash function, both of which are implemented by NSIndexPath.  </p>
+<p>For my example I'll use the adapter pattern and wrap a dictionary and expose only the methods I want:</p>
+<p>[sourcecode language="objc"]<br />
+// PZMatrix.h<br />
+#import &lt;Foundation/Foundation.h&gt;</p>
+<p>@interface PZMatrix : NSObject<br />
+{<br />
+    @private<br />
+    NSMutableDictionary *_source;<br />
+}</p>
+<p>- (id)initWithRows:(NSInteger)rows columns:(NSInteger)cols;<br />
+- (id)objectForRow:(NSInteger)row column:(NSInteger)col;<br />
+- (void)setObject:(id)object forRow:(NSInteger)row column:(NSInteger)col;<br />
+- (void)removeAllObjects;</p>
+<p>@end<br />
+[/sourcecode]</p>
+<p>You can see that I'm using the NSDictionary as the only iVar in the class, and I've created a few accessors and mutators for the data structure.</p>
+<p>[sourcecode language="objc"]<br />
+// PZMatrix.m<br />
+#import &quot;PZMatrix.h&quot;</p>
+<p>@implementation PZMatrix</p>
+<p>- (id)initWithRows:(NSInteger)rows columns:(NSInteger)cols<br />
+{<br />
+    self = [super init];<br />
+    if (self)<br />
+    {<br />
+        _source = [[NSMutableDictionary alloc] initWithCapacity:rows *cols];<br />
+    }<br />
+    return self;<br />
+}</p>
+<p>- (id)objectForRow:(NSInteger)row column:(NSInteger)col<br />
+{<br />
+    NSUInteger idxs[] = {row, col};<br />
+    NSIndexPath *path = [NSIndexPath indexPathWithIndexes:idxs length:2];<br />
+    return [_source objectForKey:path];<br />
+}</p>
+<p>- (void)setObject:(id)object forRow:(NSInteger)row column:(NSInteger)col<br />
+{<br />
+    NSUInteger idxs[] = {row, col};<br />
+    NSIndexPath *path = [NSIndexPath indexPathWithIndexes:idxs length:2];<br />
+    [_source setObject:object forKey:path];<br />
+}</p>
+<p>- (void)removeAllObjects<br />
+{<br />
+    [_source removeAllObjects];<br />
+}</p>
+<p>@end<br />
+[/sourcecode]</p>
+<p>Pretty simple.  There's obviously some code duplication here, some of which I can simplify with a category on NSIndexPath:</p>
+<p>[sourcecode language="objc"]<br />
+//  NSIndexPath+Matrix.h<br />
+#import &lt;Foundation/Foundation.h&gt;</p>
+<p>@interface NSIndexPath (Matrix)</p>
+<p>+ (NSIndexPath *)indexPathWithRow:(NSUInteger)row column:(NSUInteger)col;</p>
+<p>@end</p>
+<p>[/sourcecode]</p>
+<p>[sourcecode language="objc"]<br />
+//  NSIndexPath+Matrix.m<br />
+#import &quot;NSIndexPath+Matrix.h&quot;</p>
+<p>@implementation NSIndexPath (Matrix)</p>
+<p>+ (NSIndexPath *)indexPathWithRow:(NSUInteger)row column:(NSUInteger)col<br />
+{<br />
+    NSUInteger indexes[] = {row, col};<br />
+    return [NSIndexPath indexPathWithIndexes:indexes length:2];<br />
+}</p>
+<p>@end</p>
+<p>[/sourcecode]</p>
+<p>I can now pull that category into the matrix storage class:</p>
+<p>[sourcecode language="objc"]<br />
+// PZMatrix.m<br />
+#import &quot;PZMatrix.h&quot;<br />
+#import &quot;NSIndexPath+Matrix.h&quot;</p>
+<p>@implementation PZMatrix</p>
+<p>- (id)initWithRows:(NSInteger)rows columns:(NSInteger)cols<br />
+{<br />
+    self = [super init];<br />
+    if (self)<br />
+    {<br />
+        _source = [[NSMutableDictionary alloc] initWithCapacity:rows *cols];<br />
+    }<br />
+    return self;<br />
+}</p>
+<p>- (id)objectForRow:(NSInteger)row column:(NSInteger)col<br />
+{<br />
+    NSIndexPath *path = [NSIndexPath indexPathWithRow:row column:col];<br />
+    return [_source objectForKey:path];<br />
+}</p>
+<p>- (void)setObject:(id)object forRow:(NSInteger)row column:(NSInteger)col<br />
+{<br />
+    NSIndexPath *path = [NSIndexPath indexPathWithRow:row column:col];<br />
+    [_source setObject:object forKey:path];<br />
+}</p>
+<p>- (void)removeAllObjects<br />
+{<br />
+    [_source removeAllObjects];<br />
+}</p>
+<p>@end<br />
+[/sourcecode]</p>
+<p>Testing the implementation:<br />
+[sourcecode language="objc"]<br />
+PZMatrix *matrix = [[PZMatrix alloc] initWithRows:10 columns:10];<br />
+[matrix setObject:@&quot;foo&quot; forRow:2 column:8];<br />
+[matrix setObject:@&quot;bar&quot; forRow:0 column:9];<br />
+[matrix setObject:@&quot;baz&quot; forRow:9 column:9];</p>
+<p>NSLog(@&quot;%@&quot;, [matrix objectForRow:2 column:8]);<br />
+NSLog(@&quot;%@&quot;, [matrix objectForRow:9 column:9]);<br />
+NSLog(@&quot;%@&quot;, [matrix objectForRow:9 column:8]);<br />
+[/sourcecode]</p>

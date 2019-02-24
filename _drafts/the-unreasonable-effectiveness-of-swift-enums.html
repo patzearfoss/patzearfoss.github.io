@@ -1,0 +1,78 @@
+---
+layout: post
+title: The Unreasonable Effectiveness of Swift Enums
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta: {}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>I've been trying to do all my new work exclusively in Swift. There's a lot that I like about language, but enums are my absolute favorite feature.</p>
+<p>There's a lot written about basic uses of Swift enums. There's certainly no need to cover the basics here when others have already done such a spectacular job.  The power of enums goes well beyond being able to enumerate any type.  Associating values with enums adds a whole new level of expressiveness and clarity to a number of common patterns in iOS development.</p>
+<p>You've surely seen the contrived example in the Apple Swift Guide using an enum and associated values to represent barcodes.</p>
+<pre>
+[code language="swift"]
+enum Barcode {
+    case UPCA(Int, Int, Int, Int)
+    case QRCode(String)
+ }
+ [/code]
+</pre>
+<p>In this case the UPCA enum value associates four Ints, and the QRCode associates a string. To unwrap these associated values you need to use a switch or an "if case" statement:</p>
+<pre>
+[code language="swift"]
+switch productBarcode {
+case let .UPCA(numberSystem, manufacturer, product, check):
+    print(&quot;UPC-A: \(numberSystem), \(manufacturer), \(product), \(check).&quot;)
+case let .QRCode(productCode):
+    print(&quot;QR code: \(productCode).&quot;)
+}
+[/code]
+</pre>
+<p>The advantage of this over other approaches is communicating quite clearly that the data is a barcode and also carrying that data. In Objective-C or other languages you would either need to handle this through a series of classes or by some UPC class that would have a "mode" which would probably be an enum. </p>
+<p>This UPC example is somewhat trivial however. Instead enums can be even more powerful where the enum values have even more overlap and offer a great alternative to subclassing.  </p>
+<p>MVVM Stuff</p>
+<p>At CircleBack, we try to use the MVVM design pattern wherever we can. If you're looking for an in-depth introduction I recommend this piece by Bob Spryn. The short explanation is that MVVM employs lightweight data structures of varying types, collectively referred to as view models to represent the data in the view. </p>
+<p>Take the following view showing contact updates in the CircleBack app, specifically at the table row data.  </p>
+<p>You'll see a few basic types of data. Some rows have 3 text elements, the rest have two. Some can be selected and deselected where others cannot, and lastly some of those rows can show as strikethrough text representing a deletion.  </p>
+<p>You can imagine how you might implement a set of view models in an objective-c universe.  You might create a couple of classes for view model rows, perhaps one with three bits of information and another with two.  They might have properties for whether the text should be strikethrough or whether the row is selectable.  If you're clever you may specify those fields in protocols your view models might adopt.</p>
+<p>In fact this is largely how we originally implemented the structure in the CircleBack app, through a series of view model classes. It worked ok and was nice and testable, but ultimately we wound up with a relatively heavy class hierarchy for what it ultimately a very simple data structure. </p>
+<p>The Swift Way</p>
+<p>As we started to rethink some of our classes and began adopting swift, I immediately wanted to see if I could completely replace the view model classes with swift enums.  I chose to base my enum on whether the row in question represented a two line for basic data like email or phone or a three line cell for job information.  </p>
+<p>The basic structure looked like this:</p>
+<pre>
+[code language="swift"]
+enum TableRowModel {
+    case JobInfo
+    case OtherInfo
+}
+[/code]
+</pre>
+<p>This is easy to switch off of for each type when creating cells.  Adding associated data to display is easy as well:</p>
+<pre>
+[code language="swift"]
+enum TableRowModel {
+    case JobInfo(jobTitle: String, company: String)
+    case OtherInfo(label: String, value:String)
+}
+[/code]
+</pre>
+<p>We'll probably want to add the information about whether the text should be strikethrough and whether it's selectable:</p>
+<pre>
+[code language="swift"]
+enum TableRowModel {
+    case JobInfo(jobTitle: String, company: String, stikethrough: Bool, selectable: Bool)
+    case OtherInfo(label: String, value:String, stikethrough: Bool, selectable: Bool)
+}
+[/code]
+</pre>

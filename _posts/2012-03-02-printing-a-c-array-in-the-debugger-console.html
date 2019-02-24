@@ -1,0 +1,38 @@
+---
+layout: post
+title: Printing a C array in the debugger Console
+date: 2012-03-02 14:16:04.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Debugging
+tags:
+- console
+- debugging
+- gdb
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1432164683;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>I'm by no means a GDB expert.  I know the basics, but I just learned this gem today.  Say you have a C array with five items created with something like this:</p>
+<p>[code language="objc"]</p>
+<p>int *array = malloc(5 * sizeof(int));</p>
+<p>[/code]</p>
+<p>And you want to print it out in the debugger quickly.  You can't just print the pointer because GDB doesn't know to print it as an array, but this will:</p>
+<p>[code]</p>
+<p>p *array@5</p>
+<p>[/code]</p>
+<p>Output:</p>
+<p>[code]</p>
+<p>$1 = {0, 0, 0, 0, 0, 1}</p>
+<p>[/code]</p>
+<p>To use this the left hand side, before the '@' should be an array, and the right hand side needs to be the length of the array.  Very handy.</p>

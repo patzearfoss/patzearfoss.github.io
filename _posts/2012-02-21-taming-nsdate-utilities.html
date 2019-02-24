@@ -1,0 +1,56 @@
+---
+layout: post
+title: Taming NSDate-Utilities
+date: 2012-02-21 22:04:45.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Libraries
+tags:
+- libraries
+- nscalendar
+- NSDate
+- open source
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1432456424;}
+  tagazine-media: a:7:{s:7:"primary";s:0:"";s:6:"images";a:0:{}s:6:"videos";a:0:{}s:11:"image_count";s:1:"0";s:6:"author";s:6:"684115";s:7:"blog_id";s:8:"20463411";s:9:"mod_stamp";s:19:"2012-02-22
+    03:04:45";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p><a title="NSDate-Extensions on GitHub" href="https://github.com/erica/NSDate-Extensions">NSDate-Utilities</a> is a part of a great library for working with NSCalendar and NSDate. It provides uber-convenient methods on NSDate for finding out, for example, whether the NSDate receiver falls within the current day. These utilities are fantastic, but unfortunately, they're also a bit on the slow side.</p>
+<h2>Why so slow?</h2>
+<p>Many of the methods rely on getting NSDateComponents from a date via the NSCalendar. Each sends an independent call to [NSCalendar currentCalendar]. Unfortunately, getting the current calendar seems really slow. The latest SalesBag release will feature a very robust set of calendar views to help salespeople schedule their meetings. This means a ton of calculations on NSDate inside tight loops. Using the NSDate-Utilities methods and the time profiler, I found the app spending nearly half a second in [NSCalendar currentCalendar]. This is not good.</p>
+<h2>Diagnosis</h2>
+<p>The NSDate-Utilities methods that spend time with NSCalendar all call out to [NSCalendar currentCalendar] independently. For general use, this is probably fine and leaves the app a little leaner on memory. It also (seems to) guarantee that the calendar will always be right if the user changes it mid stream in the app. For Salesbag, this won't be a problem. We assume that salespeople in the US will be using the gregorian calendar.</p>
+<h2>Fixing</h2>
+<p>To speed things up I first created a static NSCalendar variable at the top of the m file that we'll use in place of grabbing NSCalendar fresh every time.</p>
+<p>[code language="objc"]<br />
+static NSCalendar *curCalendar = nil;<br />
+[/code]</p>
+<p>Then I replaced the #define for current calendar with my static variable</p>
+<p>[code language="objc"]<br />
+#define CURRENT_CALENDAR curCalendar<br />
+[/code]</p>
+<p>Lastly, I need to create the calendar when needed. For this I created a new macro that I placed at the head of any method using the CURRENT_CALENDAR macro:</p>
+<p>[code language="objc"]<br />
+#define INIT_CURRENT_CALENDAR if (curCalendar == nil) curCalendar = [[NSCalendar currentCalendar] retain];</p>
+<p>// later ...<br />
+- (BOOL) isSameYearAsDate: (NSDate *) aDate<br />
+{<br />
+    INIT_CURRENT_CALENDAR<br />
+	NSDateComponents *components1 = [CURRENT_CALENDAR components:NSYearCalendarUnit fromDate:self];<br />
+	NSDateComponents *components2 = [CURRENT_CALENDAR components:NSYearCalendarUnit fromDate:aDate];<br />
+	return ([components1 year] == [components2 year]);<br />
+}<br />
+[/code]</p>
+<h2>Improvement</h2>
+<p>The time profiler showed the time spent in [NSCalendar currentCalendar] dropped to a measly 35ms. Something I can certainly live with. Of course there's no such thing as a free lunch and any developer would point out that my static won't be deallocated until the app terminates. In this case though, the memory trade off was worth it for the speed increase.</p>

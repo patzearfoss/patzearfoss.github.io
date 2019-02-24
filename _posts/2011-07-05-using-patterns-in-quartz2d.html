@@ -1,0 +1,58 @@
+---
+layout: post
+title: Using Patterns in Quartz2D
+date: 2011-07-05 17:43:42.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- CGContext
+- drawing
+- patterns
+- UIColor
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1362030844;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>There's not a ton of information out there about how to use patterns with the Quartz framework and drawing patterns, especially about combining it with UIColors ability to create colors with patterns.</p>
+<p>You probably know about creating UIColors with pattern images:<br />
+[code language="objc"]<br />
+UIColor *myPattern = [UIColor colorWithPatternImage:[UIImage imageNamed:@&quot;mypattern.png&quot;]];<br />
+[/code]</p>
+<p>If you're just filling in background colors with this, it works fine, but if you need to get down into the nitty gritty using CoreGraphics, you'll need to do some more work.  Here's what you'll need in the drawing code to make it all work:</p>
+<p>[code language="objc"]<br />
+CGContextRef ctx = UIGraphicsGetCurrentContext();<br />
+CGColorRef color = [myPattern CGColor];<br />
+CGColorSpaceRef colorSpace = CGColorGetColorSpace(color);<br />
+CGContextSetFillColorSpace(ctx, colorSpace);<br />
+if (CGColorSpaceGetModel(colorSpace) == kCGColorSpaceModelPattern)<br />
+{<br />
+    CGFloat alpha = 1.0f;<br />
+    CGContextSetFillPattern(ctx, CGColorGetPattern(color), &amp;alpha);<br />
+}<br />
+else<br />
+{<br />
+    CGContextSetFillColor(ctx, CGColorGetComponents(color));<br />
+}<br />
+[/code]</p>
+<p>This is the kind of code you might us drawRect: for a UIView.  We first need to determine if we're painting a color or an image which is determined by examining the color space in line 5.  </p>
+<p>If the color space model is not a pattern, we can set the fill color and simply move along. Otherwise we need to set the fill pattern.  Using an alpha value for the components is described in the CGContext docs:</p>
+<blockquote><p>
+<em>components</em><br />
+If the pattern is an uncolored (or a masking) pattern, pass an array of intensity values that specify the color to use when the pattern is painted. The number of array elements must equal the number of components in the base space of the fill pattern color space, plus an additional component for the alpha value.<br />
+If the pattern is a colored pattern, pass an alpha value.
+</p></blockquote>
+<p>Since we're using a colored pattern image, we can simply use the alpha value.</p>
+<p>That's it!  Hope this helps somebody out there!</p>
+<p><strong>EDIT:</strong> <a href="https://github.com/pzearfoss/ColorPattern" title="Code on GitHub" target="_blank">Sample project is now on GitHub</a></p>
+<p>Also, here's an easy online tool to create your own pattern: <a href="http://www.stripegenerator.com/" title="StripeGenerator" target="_blank">StripeGenerator</a></p>

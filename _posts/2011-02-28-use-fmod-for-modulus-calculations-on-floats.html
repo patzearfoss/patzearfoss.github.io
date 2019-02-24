@@ -1,0 +1,41 @@
+---
+layout: post
+title: Use fmod for modulus calculations on floats
+date: 2011-02-28 10:21:55.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- c
+- coreanimation
+- coregraphics
+- math
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1312278640";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Everyone knows about the modulus operator (%) and that it returns the remainder of an integer division:</p>
+<p>[sourcecode language="c"]<br />
+// mod = 1<br />
+int mod  = 11 % 2;<br />
+[/sourcecode]</p>
+<p>Occasionally you'll need to get a remainder of a floating point calculation.  I'm finding this more and more while using CoreAnimation and CoreGraphics since screen placement is handled through CGFloats.  Fortunately the math.h library includes the function fmod to handle this:</p>
+<p>[sourcecode language="objc"]<br />
+#import &lt;math.h&gt;</p>
+<p>CGFloat mod = fmod(47.236456, 5);<br />
+NSLog(@&quot;%f&quot;, mod);<br />
+// prints 2.236456<br />
+[/sourcecode]</p>
+<p>While your CGRects and CGPoints will be whole numbers most of the time, when dealing with animations coordinates will often have trailing decimals.  Additionally you'll find that points on retina display interfaces will frequently be measured to the half pixel.</p>
+<p><a href="http://www.cplusplus.com/reference/clibrary/cmath/fmod/">fmod reference on cplusplus.com</a></p>

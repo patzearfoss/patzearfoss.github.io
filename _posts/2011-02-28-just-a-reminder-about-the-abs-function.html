@@ -1,0 +1,31 @@
+---
+layout: post
+title: Just a reminder about the abs function
+date: 2011-02-28 12:35:26.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- abs
+- coreanimation
+- math
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1316776821";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Turns out the source of my problem had to do with the abs function.  Remember that abs(double) will truncate the double and return an integer:</p>
+<p>[sourcecode language="objc"]<br />
+double pi = abs(-3.14159);<br />
+// returns 3<br />
+[/sourcecode]</p>

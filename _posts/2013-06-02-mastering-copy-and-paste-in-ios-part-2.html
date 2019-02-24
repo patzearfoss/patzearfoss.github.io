@@ -1,0 +1,174 @@
+---
+layout: post
+title: Mastering Copy and Paste in iOS - Part 2
+date: 2013-06-02 09:34:11.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+- Tutorials
+tags:
+- copy and paste
+- UIMenuController
+- UIPasteboard
+- UIResponderStandardEditActions
+meta:
+  _edit_last: '684115'
+  draftfeedback_requests: a:4:{s:20:"klandry@mindgrub.com";a:3:{s:3:"key";s:13:"51a10e83516d7";s:4:"time";s:10:"1369509507";s:7:"user_id";s:6:"684115";}s:19:"sraouf@mindgrub.com";a:3:{s:3:"key";s:13:"51a10e8385824";s:4:"time";s:10:"1369509507";s:7:"user_id";s:6:"684115";}s:20:"cberlin@mindgrub.com";a:3:{s:3:"key";s:13:"51a10e83b97dc";s:4:"time";s:10:"1369509507";s:7:"user_id";s:6:"684115";}s:18:"kenny@mindgrub.com";a:3:{s:3:"key";s:13:"51a10e8401bfe";s:4:"time";s:10:"1369509508";s:7:"user_id";s:6:"684115";}}
+  draft_feedback: "a:1:{s:19:\"sraouf@mindgrub.com\";a:1:{i:0;a:2:{s:4:\"time\";s:10:\"1369847498\";s:7:\"content\";s:977:\"
+    \ reword \"There are several components we need to be introduced to understand
+    the copy and paste system.\"\nto \"To understand the copy and paste system, we
+    need to be introduced to the following several components \n\n\ncorrect: \"You’ll
+    notice that the menu controller is a singleton, and this is the only way instantiate
+    one.\"\n\nExplain why the following is a good thing, perhaps provide an example:
+    \"You might also mark a pasteboard as persistent so it will live on after your
+    app terminates. This isn’t particularly useful for a single application but can
+    be extremely powerful for preventing data leakage while still maintaining copy
+    and paste functionality between a suite of apps.\"\n\nPerhaps touch on the user
+    experience on the following:\"Running the application you’ll now see that you
+    can copy and paste between image views as you could before, but if you try to
+    copy from another app like Mobile Safari it will not paste in our app.\"\n\nSummary:
+    excellent work, thank you\";}}}"
+  _publicize_pending: '1'
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>In <a title="Mastering Copy and Paste in iOS – Part 1" href="http://zearfoss.wordpress.com/2013/05/22/masterin-copy-and-paste-in-your-ios-app/">part 1</a> of this series I focused on a very simple locking down of copy and paste in iOS.  Replying NO to canPerformSelector: simply removes the ability to copy and paste from the menu that appears.  Needless to say that can be a little inelegant.  Preventing data leakage can be a good thing but making your app difficult to use is not.  In this post we'll dig deeper into how you can interact with the copy and paste system to not only prevent leakage but also to work with more than just text.</p>
+<p>First let's get acquainted with some of the components of the copy and paste system.</p>
+<h2>UIPasteboard</h2>
+<p>Any time you copy or cut anything in iOS that content gets posted to an instance of <a title="UIPasteboard Reference" href="http://developer.apple.com/library/ios/#documentation/uikit/reference/UIPasteboard_Class/Reference.html">UIPasteboard</a>.  The pasteboard is a powerful and type agnostic way to move content from one application to another or between parts of a single application.  The pasteboard is capable of storing nearly any type of data, not just text.</p>
+<h2>UIMenuController</h2>
+<p><a href="http://zearfoss.files.wordpress.com/2013/05/screen-shot-2013-05-25-at-3-10-07-pm.png"><img class="alignnone size-medium wp-image-444" alt="Screen Shot 2013-05-25 at 3.10.07 PM" src="{{ site.baseurl }}/assets/screen-shot-2013-05-25-at-3-10-07-pm.png?w=300" width="300" height="78" /></a></p>
+<p><a title="UIMenuController Reference" href="http://developer.apple.com/library/ios/#documentation/iPhone/Reference/UIMenuController_Class/UIMenuController.html">UIMenuController</a> is the controller that's displayed when you highlight text.  Like many other visual controls in iOS this one is pretty locked down.  There are several system items that are added to the menu by default, but you can certainly add your own items via <a title="UIMenuItem reference" href="http://developer.apple.com/library/ios/#documentation/uikit/reference/UIMenuItem_Class/Reference/MenuItem.html">UIMenuItem</a> to do whatever you like.</p>
+<h2>UIResponderStandardEditActions</h2>
+<p><a title="UIResponderStandardEditActions reference" href="http://developer.apple.com/library/ios/#documentation/uikit/reference/UIResponderStandardEditActions_Protocol/UIResponderStandardEditActions.html">This informal protocol</a> is conformed to by descendants of UIResponder to handle the common actions provided by UIMenuController.  UIMenuController will start looking for objects in the responder chain with the first responder moving up the hierarchy until it finds a valid target for the various messages offered by the specified action, such as copy: or cut:.  As we saw in <a title="Mastering Copy and Paste in iOS – Part 1" href="http://zearfoss.wordpress.com/2013/05/22/masterin-copy-and-paste-in-your-ios-app/">part 1</a>, objects responding to canPerformAction: alter the options provided by the UIMenuController.</p>
+<p>The way these three interact isn't entirely obvious, so we'll build a sample application that shows placing data in an application specific pasteboard, uses a custom image view that conforms to the UIResponderStandardEditActions protocol supporting cutting and pasting, and adding some custom functionality to the UIMenuController that will appear over our control.  You can download the sample project <a title="Sample code" href="https://github.com/pzearfoss/CustomCopyPaste">here</a>.</p>
+<h2>Setting up the project</h2>
+<p>We'll start with a master-detail template.  The master view controller will contain a list of table cells with an image and some text.  The detail view will show the image displayed.  This isn't a post about table views and interface builder, so I recommend just checking out the sample code if you're not comfortable with the basic setup.</p>
+<h2>The custom control</h2>
+<p>Our custom control will simply be a <a title="UIImageView reference" href="http://developer.apple.com/library/ios/#documentation/uikit/reference/UIImageView_Class/Reference/Reference.html">UIImageView</a> that implements the basic methods for cut, copy, and paste.  To get the implementation correct it's important to think about what a user's expectation would be for these three actions:</p>
+<ul>
+<li>copy - the image is made available to paste into other controls that can accept an image as content.</li>
+<li>cut - the image is made available to paste into other controls that can accept the image and the image is removed from the current control.</li>
+<li>paste - the displayed image is replaced with whatever image is in the clipboard.</li>
+</ul>
+<p>Implementing these three methods from UIResponderStandardEditActions is actually quite simple:</p>
+<p>[code language="objc"]<br />
+- (void)copy:(id)sender<br />
+{<br />
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];<br />
+    [pasteboard setImage:self.image];<br />
+}</p>
+<p>- (void)paste:(id)sender<br />
+{<br />
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];<br />
+    if (pasteboard.image) self.image = pasteboard.image;<br />
+}</p>
+<p>- (void)thumb:(id)sender<br />
+{<br />
+    UIImage *thumb = [self thumbnailFromImage:self.image];<br />
+    [[UIPasteboard generalPasteboard] setImage:thumb];<br />
+}<br />
+[/code]</p>
+<p>Easy, right? The copy method will add the UIImageView's image to the pasteboard via setImage. Conversely, paste will place the image from the pasteboard if it exists. Cut will first call copy to place the image to the pasteboard then clear out the image property.</p>
+<h2>Adding the UIMenuController</h2>
+<p>You can run this code now, however there's no way to actually access the cut, copy, and paste methods.  We'll have to do a couple of things to get the UIMenuController to appear and allow us to copy and paste the image content.</p>
+<ol>
+<li>Add a long press gesture recognizer to our control.</li>
+<li>On the action for gesture recognizer we'll make our control the first responder.</li>
+<li>Lastly show the menu controller.</li>
+</ol>
+<p>Adding the gesture recognizer is easy.  See the code below for creating the UIMenuController:</p>
+<p>[code language="objc"]<br />
+- (void)handleLongPress:(UILongPressGestureRecognizer *)sender<br />
+{<br />
+    NSLog(@&quot;long press&quot;);</p>
+<p>    UIMenuController *menu = [UIMenuController sharedMenuController];<br />
+    if (![menu isMenuVisible])<br />
+    {<br />
+        [self becomeFirstResponder];<br />
+        [menu setTargetRect:self.frame inView:self.superview];<br />
+        [menu setMenuVisible:YES animated:YES];<br />
+    }<br />
+}<br />
+[/code]</p>
+<p>You'll notice that the menu controller is a singleton, and this is the only way to instantiate one. If the menu isn't shown already we'll make our image view the first responder and display the menu. The critically important step is to register ourselves as the first responder. Remember that the UIMenuController looks for the protocol methods using the responder chain. No other class in our view will respond to these methods. Without setting ourselves as the first responder the UIMenuViewController won't display at all.</p>
+<p>Since we implement cut, copy, and paste, those are the three buttons presented in the menu controller.  At this point you can run the app and successfully copy and paste between the image views.  You can also try jumping out to Mobile Safari, long pressing an image, selecting copy and pasting it into one of your image views if you're still skeptical.</p>
+<h2>Adding custom actions to the menu</h2>
+<p>UIMenuController exposes the menuItems property allowing you to add custom menu items.  The menu items are added after any system items and must be instances of <a title="UIMenuItem reference" href="http://developer.apple.com/library/ios/#documentation/uikit/reference/UIMenuItem_Class/Reference/MenuItem.html">UIMenuItem</a>.  We'll add a custom menu item to copy a thumbnail of the image to the pasteboard.</p>
+<p>Creating the thumbnail is somewhat out of scope for a detailed explanation, but here's the code below.  It takes an image and returns one-third the size of the original (source material taken from <a title="BeAGeek on creating a thumbnail" href="http://beageek.biz/how-to-create-thumbnail-uiimage-xcode-ios/">here</a>):</p>
+<p>[code language="objc"]<br />
+- (UIImage *)thumbnailFromImage:(UIImage *)source<br />
+{<br />
+    CGSize originalSize = source.size;<br />
+    CGSize destSize = CGSizeMake(originalSize.width / 3, originalSize.height / 3);</p>
+<p>    UIGraphicsBeginImageContext(destSize);<br />
+    [ source drawInRect:(CGRect){CGPointZero, destSize}];<br />
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();<br />
+    UIGraphicsEndImageContext();</p>
+<p>    return newImage;<br />
+}<br />
+[/code]</p>
+<p>Next we need to create a method on our image view to place the thumbnail on the pasteboard:</p>
+<p>[code language="objc"]<br />
+- (void)thumb:(id)sender<br />
+{<br />
+    UIImage *thumb = [self thumbnailFromImage:self.image];<br />
+    [[UIPasteboard generalPasteboard] setImage:thumb];<br />
+}<br />
+[/code]</p>
+<p>Lastly we need to create the UIMenuItem to add to the UIMenuController. The UIMenuItem class is very simple and only takes a title and selector. Since we added the method thumb: to our image view that's the selector we'll reference in the menu item.</p>
+<p>[code language="objc"]<br />
+UIMenuItem *item = [[UIMenuItem alloc] initWithTitle:@&quot;Copy Thumbnail&quot; action:@selector(thumb:)];<br />
+menu.menuItems = @[item];<br />
+[/code]</p>
+<p>We'll place this code right before showing the menu controller in the long press handler. You can now run the app, select "Copy Thumbnail" and you'll see the image pasted is a thumbnail relative to the original.</p>
+<p><strong>Note: </strong>If you created the nib for the detail view yourself, it's important the view mode to "center" to avoid the image view stretching the thumbnail when you paste it.</p>
+<h2>Creating an application specific pasteboard</h2>
+<p>Up until this point we've been using the standard general pasteboard but the SDK provides us other options as well. The only requirement for creating a new one is that the name must be unique. You might also mark a pasteboard as persistent so it will live on after your app terminates. This isn't particularly useful for a single application but can be extremely powerful for preventing data leakage while still maintaining copy and paste functionality between a suite of apps.</p>
+<p>We'll define the custom pasteboard name in the application delegate's header file. We can import that into any other file where I need the pasteboard name.</p>
+<p>[code language="objc"]<br />
+// App delegate header<br />
+extern NSString *const pasteboardIdentifier;<br />
+[/code]</p>
+<p>I'll also initialize the pasteboard in applicationDidLoad method on the app delegate:</p>
+<p>[code language="objc"]<br />
+// app delegate implementation file<br />
+// make sure to define the extern<br />
+NSString *const pasteboardIdentifier = @&quot;com.pzearfoss.customCopyPaste&quot;;</p>
+<p>// ...<br />
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions<br />
+{<br />
+    // ...<br />
+    [UIPasteboard pasteboardWithName:pasteboardIdentifier create:YES];<br />
+    // ...<br />
+}<br />
+[/code]</p>
+<p>Lastly, in my image view I'll replace the generalPasteboard call with pasteboardWithName:create:</p>
+<p>[code language="objc"]<br />
+- (void)copy:(id)sender<br />
+{<br />
+    UIPasteboard *pasteboard = [UIPasteboard pasteboardWithName:pasteboardIdentifier create:NO];<br />
+    [pasteboard setImage:self.image];<br />
+}</p>
+<p>- (void)paste:(id)sender<br />
+{<br />
+    UIPasteboard *pasteboard = [UIPasteboard pasteboardWithName:pasteboardIdentifier create:NO];<br />
+    if (pasteboard.image) self.image = pasteboard.image;<br />
+}</p>
+<p>- (void)thumb:(id)sender<br />
+{<br />
+    UIImage *thumb = [self thumbnailFromImage:self.image];<br />
+    [[UIPasteboard pasteboardWithName:pasteboardIdentifier create:NO] setImage:thumb];<br />
+}<br />
+[/code]</p>
+<p>Running the application you'll now see that you can copy and paste between image views as you could before, but if you try to copy from another app like Mobile Safari it will not paste in our app.</p>
+<p>That concludes part 2 for implementing copy and paste, UIMenuController, and using an app specific UIPasteboard. Check out part 3 where we'll store more complex data types in the pasteboard.</p>

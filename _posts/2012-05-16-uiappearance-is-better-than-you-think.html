@@ -1,0 +1,95 @@
+---
+layout: post
+title: UIAppearance Is Better Than You Think
+date: 2012-05-16 20:11:52.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- design
+- ios5
+- UIAppearance
+meta:
+  _edit_last: '684115'
+  tagazine-media: a:7:{s:7:"primary";s:84:"http://zearfoss.files.wordpress.com/2012/05/screen-shot-2012-05-16-at-9-05-45-pm.png";s:6:"images";a:1:{s:84:"http://zearfoss.files.wordpress.com/2012/05/screen-shot-2012-05-16-at-9-05-45-pm.png";a:6:{s:8:"file_url";s:84:"http://zearfoss.files.wordpress.com/2012/05/screen-shot-2012-05-16-at-9-05-45-pm.png";s:5:"width";s:3:"396";s:6:"height";s:3:"744";s:4:"type";s:5:"image";s:4:"area";s:6:"294624";s:9:"file_path";s:0:"";}}s:6:"videos";a:0:{}s:11:"image_count";s:1:"1";s:6:"author";s:6:"684115";s:7:"blog_id";s:8:"20463411";s:9:"mod_stamp";s:19:"2012-05-17
+    01:11:52";}
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1423560445;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>You already know about the UIAppearance protocols added to iOS. You know that UIAppearance makes it WAY simpler to customize the appearance of the common UI elements is iOS. You probably know that you can customize the appearance of the duly marked UI_APPEARANCE_SELECTOR methods on your own subclasses as a means of differentiating certain elements from others of the same type (such as specifying a class of UIBarButtonItem as a cancel button and therefore always red).</p>
+<p>What you might not know is that it's trivial to use UI_APPEARANCE_SELECTOR on your own custom subclasses for visual elements that <strong>are not</strong> in the standard set of appearance selectors.  Here's a quick example of how you might use this:</p>
+<p>Say you have a particular class of view you have all over your application that has border around it (using the CALayer backing the view).  You could hard code this look into a view subclass, or you could do it the hard way by setting this on every individual view.  You can also use a UI_APPEARANCE_SELECTOR on your custom class and set it with an appearance proxy.  This functionality and behavior falls squarely under "I can't believe it's this easy".</p>
+<p><strong>Here's the interface:</strong></p>
+<p>[code language="objc"]<br />
+#import &lt;UIKit/UIKit.h&gt;</p>
+<p>@interface TestView : UIView</p>
+<p>@property (nonatomic, retain) UIColor *backgroundColor UI_APPEARANCE_SELECTOR;<br />
+@property (nonatomic, retain) UIColor *borderColor UI_APPEARANCE_SELECTOR;<br />
+@property (nonatomic, retain) UIFont *font UI_APPEARANCE_SELECTOR;<br />
+@end<br />
+[/code]</p>
+<p><strong>Here's the implementation:</strong></p>
+<p>[code language="objc"]<br />
+#import &quot;TestView.h&quot;<br />
+#import &lt;QuartzCore/QuartzCore.h&gt;</p>
+<p>@implementation TestView<br />
+@dynamic backgroundColor;<br />
+@dynamic borderColor;<br />
+@synthesize font = _font;</p>
+<p>- (void)drawRect:(CGRect)rect<br />
+{<br />
+    NSLog(@&quot;%@&quot;, self.font);<br />
+}</p>
+<p>- (void)setBackgroundColor:(UIColor *)backgroundColor<br />
+{<br />
+    [super setBackgroundColor:backgroundColor];<br />
+}</p>
+<p>- (UIColor *)backgroundColor<br />
+{<br />
+    return [super backgroundColor];<br />
+}</p>
+<p>- (void)setBorderColor:(UIColor *)borderColor<br />
+{<br />
+    self.layer.borderWidth = 4.0;<br />
+    self.layer.borderColor = [borderColor CGColor];<br />
+}</p>
+<p>- (UIColor *)borderColor<br />
+{<br />
+    return [UIColor colorWithCGColor:self.layer.borderColor];<br />
+}</p>
+<p>@end<br />
+[/code]</p>
+<p><strong>And in the App Delegate:</strong></p>
+<p>[code language="objc"]<br />
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions<br />
+{<br />
+    self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];<br />
+    self.window.backgroundColor = [UIColor whiteColor];</p>
+<p>    MainViewController *mainView = [[MainViewController alloc] initWithNibName:@&quot;MainViewController&quot; bundle:nil];</p>
+<p>    self.window.rootViewController = mainView;<br />
+    [self.window makeKeyAndVisible];</p>
+<p>    [[TestView appearance] setBackgroundColor:[UIColor blueColor]];<br />
+    [[TestView appearance] setBorderColor:[UIColor redColor]];<br />
+    [[TestView appearance] setFont:[UIFont systemFontOfSize:12]];<br />
+    return YES;<br />
+}<br />
+[/code]</p>
+<p>And here's the result:</p>
+<p><a href="http://zearfoss.files.wordpress.com/2012/05/screen-shot-2012-05-16-at-9-05-45-pm.png"><img class="alignnone size-medium wp-image-378" title="Screen Shot 2012-05-16 at 9.05.45 PM" src="{{ site.baseurl }}/assets/screen-shot-2012-05-16-at-9-05-45-pm.png?w=159" alt="" width="159" height="300" /></a></p>
+<p>And the NSLog prints the font that was set:</p>
+<blockquote><p>2012-05-16 17:03:43.517 test[26634:f803]  font-family: "Helvetica"; font-weight: normal; font-style: normal; font-size: 12px
+</p></blockquote>
+<p><strong>What's the advantage?</strong></p>
+<p>Well it depends on your development strategy and the scope of the project.  For large, running projects it's helpful to separate as much of the presentation code (fonts and colors) from the logic of the application.  This allows you to keep all of your styles centralized in one place as opposed to littered throughout a bunch disparate classes in much the same way that CSS can separate presentation logic from the HTML structure of a website.  Additionally, if you're writing framework level code for a static library it offers greater flexibility and code reuse where you're not as able to edit the implementation of a class.  This of course all depends on the purpose of your app.  For once-and-done style apps it may not make quite as much sense.</p>
+<p><strong>Technical notes:</strong></p>
+<p>You will find that if you tinker around that the UI_APPEARANCE_SELECTOR macro isn't really necessary.  In fact, the code above will work just fine without it.  The macro #define's to nothing, so I'm not personally sure if there's more grandiose future plans for if it's just a placebo macro to let developers know what will be guaranteed to be supported.  In truth, virtually any display related property on a UIView can already be set using UIAppearance proxies, though like all non-official APIs Apple can change that without notice.  By taking the approach above you're likely future proofing your code for later.  If I were to take a guess at the internals of UIAppearance it seems like a clever hack on KVC more than a real, run-time enforced protocol.</p>
+<p>Regardless, there's a lot of power to be exploited using this protocol and it should change the way you think about creating a great visual style for your apps.</p>

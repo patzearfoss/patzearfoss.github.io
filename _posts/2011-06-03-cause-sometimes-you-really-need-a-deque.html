@@ -1,0 +1,35 @@
+---
+layout: post
+title: "'Cause sometimes, you really need a deque"
+date: 2011-06-03 16:31:18.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories: []
+tags: []
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1423557413;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>The default collections in Foundation are great and just what you need 99% of the time. However, none of the collections actually guarantee the underlying structure of the class you're using. Anyone with a computer science background knows that an array should always yield constant time ( O(1) ) access to an object given the index, however the <a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFCollections/Articles/types.html#//apple_ref/doc/uid/20001129-102718-CHDCJHGC">CFArray documentation</a> clearly states:</p>
+<blockquote><p>The access time for a value in the array is guaranteed to be at worst O(log N) for any implementation, current and future, but will often be O(1)</p></blockquote>
+<p>Since its based on CFArray, we can assume this is true for NSArray as well.</p>
+<p>Again, 99% of the time this isn't a problem in the average iOS app, however for a project I'm working on now, I needed a data structure that provided ordering but I knew I would be doing a lot of adding and removing of objects on either end. A deque is what I needed, but Cocoa doesn't supply me any deques. Simply using an NSArray would incur a performance hit when prepending onto the front.</p>
+<p>Enter <a href="http://cocoaheads.byu.edu/code/CHDataStructures">CHDataStructures</a>, a suite of classes providing for more exact implementations of data structures for when that the structure really matters:</p>
+<ul>
+<li>Trees: AVL, Anderson, RedBlack</li>
+<li>Linked lists - singly linked, doubly linked</li>
+<li>Stacks, Queues, Deques</li>
+<li>Sorted sets and sorted dictionaries</li>
+<li>Circular Buffers</li>
+</ul>
+<p>These certainly aren't for every day, but they're good to have around when you need them.  The project homepage can be found <a href="http://cocoaheads.byu.edu/code/CHDataStructures">here</a>, though none of the SVN links worked for me.  Fortunately google found a <a href="https://bitbucket.org/devartum/chdatastructures">bitbucket repo</a> containing the code.</p>
+<p>Also, here's the <a href="http://ridiculousfish.com/blog/archives/2005/12/23/array/">RidiculousFish post</a> containing more information than you ever wanted to know about the Foundation collection classes.</p>

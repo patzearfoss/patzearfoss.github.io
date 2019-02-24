@@ -1,0 +1,46 @@
+---
+layout: post
+title: Another CoreAnimation Gotcha
+date: 2011-02-24 21:40:02.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- calayer
+- coreanimation
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1312278638";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>As I said before, the documentation available for CoreAnimation is a bit lacking.  This one had me scratching my head for a time today.</p>
+<p>For my current project, I have several layers that should have some of their default animation actions disabled.  This is pretty easy to do by handing a dictionary with the desired keys set to an instance of NSNull.  For example:</p>
+<p>[sourcecode language="objc"]</p>
+<p>NSDictionary *actions = [NSDictionary dictionaryWithObjectsAndKeys:[NSNull null], @&quot;position&quot;, nil];</p>
+<p>CALayer *aLayer = [[CALayer alloc] init];</p>
+<p>aLayer.actions = actions;</p>
+<p>[/sourcecode]</p>
+<p>Under a different set of circumstances I need to reenable the animation.  This, too, is simple to do using CABasicAnimation:</p>
+<p>[sourcecode language="objc"]</p>
+<p>CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@&quot;position&quot;];</p>
+<p>animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];</p>
+<p>[aLayer addAnimation:animation forKey:@&quot;position&quot;];</p>
+<p>[/sourcecode]</p>
+<p>This code runs fine, until you have the need to intercept the animation while it's executing.  A CALayer maintains two versions of itself.</p>
+<p>The first is the model layer ([aLayer modelLayer]), which gets written to when you change a property on it.  For example, setting the position to {10, 10} writes this information to the model layer, and is present throughout the animation.</p>
+<p>The second is the presentation layer ([aLayer presentationLayer]), which hold the location of the CALayer as it's presented on the screen.  If you want to interact with the layer as it's moving, you need to access this layer.  If you're using the default actions on the layer, this all works as expected.  Once you replace the default action, there's another step you have to take which is not clearly stated in the documentation:</p>
+<p>[sourcecode language="objc"]<br />
+animation.fromValue = [NSValue valueWithCGPoint:start];<br />
+animation.toValue = [NSValue valueWithCGPoint:end];<br />
+[/sourcecode]</p>
+<p>Without specifying a start and end point, the action is unable to interpolate intermediate values during the animation.  If you inspect the presentation layer without specifying a start and end, you'll find that the values for the property you're looking for are the same as those in the model layer.</p>

@@ -1,0 +1,60 @@
+---
+layout: post
+title: Some Love for Data Structures
+date: 2011-09-16 23:26:19.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Data Structures
+- idevblogaday
+tags:
+- chdatastructures
+- data structures
+- foundation
+- nsarray
+- NSDictionary
+- nsset
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1490044903;}
+  _oembed_912f83de0781e203119d2ad33d3dda94: "{{unknown}}"
+  _oembed_a26540e9bc46a52c720eed90761c15e8: "{{unknown}}"
+  _oembed_9e3e937846f2108202b3064739bdb7e8: "{{unknown}}"
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>NSArray.  NSDictionary.  NSSet.  So common.  So ordinary.  Or are they really?</p>
+<p>You probably use tons of these every day.  You probably write them without even thinking about them.  They are the foundation of any (interesting) iOS application.  Rarely do we ever think about what they are.  Who are these creatures?  What do they do? In short they're data structures.  The foundation of an application and the bane of every computer science undergrad.</p>
+<p>It's often difficult to find good topics to blog about, especially when you're in the middle of bug-fix mode with my day job and haven't necessarily been doing anything interesting or innovative.  For my second iDevBlogADay post, I'm going to give some love to our built-in data structures and also discuss some alternatives to them.</p>
+<p>But first a side-bar:</p>
+<p><strong>Big-O</strong></p>
+<p>Big-O is used to describe the complexity of an operation (algorithm).  It defines the <strong>worst case</strong> performance of an operation.  It's usually useless describe the best or even the average case of an operation, but always useful to be able to say that an operation will perform <strong>no worse </strong>than particular value.  For data structures we define the performance in terms of 'n' which the number of items in the data structure.</p>
+<p>For instance:</p>
+<p>O(n) - "big O of n" means that for an operation we have to touch every object in the data structure at <strong>worst case</strong>.</p>
+<p>O(2n) - "big O of 2n" means that for an operation, we have to touch every object in the data structure twice at <strong>worst case.</strong></p>
+<p>O(n<sup>2</sup>) - "big O of n-squared" means that for an operation, we have to touch every object in the data structure once <strong>for every object, at worst case.</strong></p>
+<p>There are a myriad of other ways to express complexity including using the logarithm of n, or factorials of n.  I'm not really going to cover these here.</p>
+<p>Confused?  That's ok.  Here's some more concrete examples:</p>
+<p>Let's start with a basic array, defined as a basic indexed series of objects.  Let's say our array holds 1000 numbers (how many doesn't matter) and we want to search for the number 99.  We can imagine that the number 99 may exist at the first index (index 0) or the last index (999) or anywhere in the middle.  Regardless, we know that it will never take more comparisons than 1000 to find 99 if it exists.  It will also take no more than 1000 comparisons to determine whether it exists at all.  Because n = 1000, we say that the complexity is O(n) since it will always take n comparisons to find a particular value in an array.</p>
+<p>Another example.  Let's say we have our array of 1000 numbers, and we want to sort it.  Let's consider a basic sort that compares each value to every other value.  To iterate over the array will take 1000 steps, and comparing one element to every other will take another 999 steps.  So we're talking about 1000 x 999 steps, or about 1000 squared.  Therefore we say that the sort operation runs in n-squared time or O(n<sup>2</sup>).</p>
+<p>Big-O is not necessarily something you always think about, but when you're trying to optimize your code, the complexity of the algorithms you use on your data structure can become a big deal.</p>
+<p><strong>NS Data Structures</strong></p>
+<p>When we delve into the documentation for data structures like NSArray, we begin to discover that an array is not quite what we expect.  <a href="http://ridiculousfish.com/blog/archives/2005/12/23/array/">RidiculousFish points out</a> that some operations on CFArray, and consequently, NSArray are in O(N*lgN) (n times the base 2 log of n, which is bigger than n), not in straight O(n) as we might think.  Operations such as searching.  This is kind of a big deal.  What gives?</p>
+<p>The prevailing Apple wisdom seems to be that our data structures only need to <strong>look </strong>like the real thing, rather than act like it.  For instance, in a real honest-to-god array, an operation like [NSArray objectAtIndex:] should return run in what we call constant time, or O(1), meaning that it's instantaneous.  No need to count or search; we're able to jump right to where we need to go.  The CFArray comments RidiculousFish mentions say that it could run in O(lg n).  For the mathematically impaired, this is way slower.</p>
+<p>The computer scientist in you should feel cheated an betrayed.  Your inner programmer should be thinking of sending Steve Jobs a strongly worded email about this telling him that arrays indexing should be constant time and nothing else.  Don't click send just yet.  99 times out of 100 the NSArray implementation will work fine for what you need.  The same holds for all the other data structures that comes standard in Foundation.  But what about those rare times where you actually need not only the interface of a data structure (the methods on it) but also the <strong>implementation</strong> that goes along with it?</p>
+<p>Let's think about an example.  Imagine a queue, just like a line at the bank, where the first person in line is the first person served.  First in, first out.  Let's assume you needed that implementation exactly.  You need an enqueue method to add an item to the end of the line and a dequeue method to remove an item to the front.  You might easily wrap an NSMutabableArray in the following manner:</p>
+<ol>
+<li>To enqueue an item, simply use the addObject: method on NSMutableArray</li>
+<li>To dequeue an item, simply use the removeObjectAtIndex method with index 0, effectively removing the first item at the front of the array.</li>
+</ol>
+<p>Oh and did I mention you want it to be fast?  Knowing what you know about NSArray, you can see how this would wind up being a poor performance implementation.  Enqueue would be fast, since you only need to find the end of the array, probably O(1) since we'd know how big the array is.  Dequeue on the other hand would be slow and expensive since adding removing the zeroth object would involve shifting all the other objects down by 1.  This would run in O(n) time.  A better implementation would be to use some kind of chained list where lopping off the front of the list wouldn't require everything to be re-indexed.</p>
+<p><strong>Stacks and Trees and Graphs . . . Oh My</strong></p>
+<p>There's a plethora of data structures defined in the abstract sense, from trees to lists, to fully connected webs.  Questions of data structure choice can arise all the time in applications and choosing the right one can greatly enhance the speed and efficiency of your code.  You can of course opt to write your own, either by adapting one of the built in data structures like NSArray or by working from scratch.  In fact, if you've never written data structures, its always a worthwhile exercise to write some implementations to get a feel for how they work.  <a href="https://github.com/davedelong/CHDataStructures">CHDataStructures</a> is also a great library for getting implementation-exact structures for list, circular buffers, and others.</p>
+<p>The foundation structures often pamper us into using them.  They're nice, comfortable, familiar - like your favorite pair of jeans.  It's important to remember that there are other things out there.  Things that may be tailored exactly to your needs.  Things worth checking out.</p>

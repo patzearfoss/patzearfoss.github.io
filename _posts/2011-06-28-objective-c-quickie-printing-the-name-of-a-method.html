@@ -1,0 +1,33 @@
+---
+layout: post
+title: Objective-C Quickie - Printing the name of a method
+date: 2011-06-28 12:34:27.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- exceptions
+- logging
+- NSString
+- reflection
+- runtime
+- selector
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1362030845;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Getting the name of a method as a string is quite easy in objective-c.  This quickie is useful for logging, or in my case raising an exception if the method is not overridden by a subclass:</p>
+<p>[code language="objc"]<br />
+NSString *methodName = NSStringFromSelector(_cmd);<br />
+[/code]</p>
+<p>NSStringFromSelector is pretty straightforward, and _cmd is one of the two hidden parameters to every objective-c selector (along with self).</p>

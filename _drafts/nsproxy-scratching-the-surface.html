@@ -1,0 +1,30 @@
+---
+layout: post
+title: 'NSProxy: Scratching the Surface'
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _edit_last: '684115'
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>NSProxy is one of those classes that everyone has likely seen before but has no idea why it exists or why they might use it.  It's use is so obscure that not even NSHipster has put together an article on it yet.  I intend to pull back the veil on this class a little and give a real world example of how you might use this.</p>
+<p>NSObject and NSObject</p>
+<p>Expert developers know that NSObject is both a protocol and a class.  There's a few reasons for this.</p>
+<p>NSBlacksheep</p>
+<p>One of the cardinal rules of Objective-c development is that all objects should extend NSObject.  After all you want all the benefits that you get from NSObject out of the box.</p>
+<p>NSProxy is the only class (that I know of) which is not a part of the family.  It extends from, well, nothing.  It's its own root class.</p>
+<p>All NSProxy is really good for is pretending to be something else.</p>
+<p>Servants vs Slaves</p>
+<p>For NSProxy to make any sense we need to understand the mean by which objects communicate in Objective-c.  It's best to look at this in contrast to other languages that you may be familiar with.</p>
+<p>&nbsp;</p>

@@ -1,0 +1,28 @@
+---
+layout: post
+title: Namespacing Your Category Methods, The Hard Way
+date: 
+type: post
+parent_id: '0'
+published: false
+password: ''
+status: draft
+categories: []
+tags: []
+meta:
+  _edit_last: '684115'
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>I wanted to share a recent debugging experience I had.</p>
+<p>The Problem</p>
+<p>We have been working with a third party library that provides some security infrastructure for mobile devices.  The vendor provides a static library framework that gets compiled into your app.  Among other functions a developer is able to open other secure applications on the device.  We'd had everything working flawlessly during development.  We received notification that towards the end of development with this product that users were no longer able to open other secure applications and send a file along with it.</p>
+<p>Initial Debugging</p>
+<p>Back and Forth</p>
+<p>Digging In</p>
+<p>After talking with the vendor's support team, we determined that at some point during execution we should expect the library to be calling -[UIApplication openURL:].  My goal was to set up a symbolic break point on that method to find out what parameter was being passed.</p>
+<p>The breakdown of a method call</p>

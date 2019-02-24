@@ -1,0 +1,39 @@
+---
+layout: post
+title: Core Animation & CATransaction Protip
+date: 2011-02-24 16:45:58.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- CATransaction
+- coreanimation
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1312278633";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>My impression so far is that the documentation for Core Animation is pretty scant.  CATransaction allows you to animate a bunch of objects, and the system will treat them as one atomic operation.  The format is similar to the old-style animation for UIViews:</p>
+<p>[sourcecode language="objc"]</p>
+<p>[CATransaction begin];</p>
+<p>// animate some stuff</p>
+<p>[CATransaction commit];</p>
+<p>[/sourcecode]</p>
+<p>The transaction also allows you to specify a block that will fire after completion:</p>
+<p>[sourcecode language="objc"]</p>
+<p>[CATransaction begin];</p>
+<p>[CATransaction setCompletionBlock:(void) { /*code*/ }];</p>
+<p>// animate some stuff</p>
+<p>[CATransaction commit];</p>
+<p>[/sourcecode]</p>
+<p>It's worth noting that if you specify the completion block after the animations the completion block will fire immediately, whereas if you place the completion block before the animations, it will fire as you expect.</p>

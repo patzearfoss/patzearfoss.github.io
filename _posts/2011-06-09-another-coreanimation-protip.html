@@ -1,0 +1,27 @@
+---
+layout: post
+title: Another CoreAnimation Protip
+date: 2011-06-09 14:01:16.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Tips
+tags:
+- animation
+- calayer
+- coreanimation
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1352689982;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>If you're building your interface using CALayers, beware the following weirdness when sublayers are added to a parent layer.  I had a parent layer, with a bunch of sublayers being added and removed during the lifetime of the view.  I didn't want any animations when that occurs, but I was still noticing a fade in / fade out action going on.</p>
+<p>I had already disabled the kCAOrderIn and kCAOrderOut action keys on the sublayers, but I didn't realize I <em>also</em> had to disable the sublayers action on the parent layer.  Beware that the sublayers action is also fired when you call [CALayer addSublayer:] and [CALayer removeFromSuperlayer].</p>

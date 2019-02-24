@@ -1,0 +1,31 @@
+---
+layout: post
+title: Parsing Sucks
+date: 2011-03-23 13:41:56.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Methods
+- Tools
+tags:
+- json
+- parsing
+- plist
+- xml
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1311119065";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>The developers of <a href="http://www.hipmunk.com">Hipmunk</a> posted <a href="http://blog.hipmunk.com/hipmunk-for-iphone-post-mortem">a recent blog article</a> detailing their post-mortem thoughts on the creation of their iPhone client.  It's a good read top-to-bottom, but I thought the most interesting bit was regarding the performance and data transfer between the Hipmunk servers and the client.  This quote I think sums it up aptly:</p>
+<blockquote><p>Parsing large amounts of JSON sucks.</p></blockquote>
+<p>I think that can hold true whether you're talking about JSON or XML.  In fact, I find that parsing a given XML feed into business objects eats up a sizable chunk of time on any project.  Their solution was to send <em>compiled</em> plists rather than big chunks of JSON, which cut the import time down by more than an order of magnitude.  Not too shabby.</p>
+<p>Compiling a plist server side doesn't seem to be as big of a chore as you'd think.  In fact, there's a <a href="https://github.com/rodneyrehm/CFPropertyList">github project</a> that will do the server side compilation for you.  We have a couple of end-to-end products developed here at <a href="http://www.mindgrub.com">Mindgrub</a> that we're going to look at implementing using compiled plists over the XML we're using now.</p>

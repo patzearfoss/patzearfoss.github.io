@@ -1,0 +1,222 @@
+---
+layout: post
+title: A Better Table View Data Structure
+date: 2011-10-28 07:00:42.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+tags:
+- data structures
+- nsarray
+- NSDictionary
+- NSOrderedSet
+- UITableView
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1466762168;}
+  _oembed_d00a56f38d8c2bb245d5c91cc2096881: "{{unknown}}"
+  _oembed_d339a274641b3729568e6d8f2d810f48: "{{unknown}}"
+  _oembed_7e87b3ecf1166e26cddc3dd155b8ec7a: "{{unknown}}"
+  _oembed_e7e15caa3c9e5b35d116a331f77663c8: "{{unknown}}"
+  _oembed_1996a0d41ea75f62fb4efd822ba6ae35: "{{unknown}}"
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Lately, I've found myself creating a lot of table views that look like this:</p>
+<p>[caption id="attachment_263" align="aligncenter" width="193" caption="Grouped Table View"]<a href="http://zearfoss.files.wordpress.com/2011/10/grouped-table-view.png"><img class="size-medium wp-image-263" title="grouped table view" src="{{ site.baseurl }}/assets/grouped-table-view.png?w=193" alt="Grouped Table View" width="193" height="300" /></a>[/caption]</p>
+<p>A plain-jane table view filled with homogenous items grouped by some common element.  I couldn't help but notice how ill-suited the standard NS data structures are for handling this.  It always involves some sorted array containing the keys of a dictionary which is filled with sorted arrays.  The setup for these is pretty standard and easily repeatable, so I submit to the community my IndexArray class which takes care of much of the boiler plate for you.  This is definitely rough around the edges as I only started putting this all together yesterday.</p>
+<p>First some high level requirements:</p>
+<ul>
+<li>Everything should be sortable: keys and items.</li>
+<li>I want to be able to add and remove items without having to always resort.</li>
+<li>I want to be able to specify how the sort should occur.  I want this to be as convenient as sorting an array.</li>
+<li>I don't want have to worry about the logic of whether a key has an array associated with it when I push items into it.</li>
+<li>Items should be easily accessible by index so it works rather seamlessly with UITableViews.</li>
+<li>Keys should have the same freedom as they do in NSDictionary.</li>
+</ul>
+<p>Here's my public interface as it stands now:</p>
+<p>[code language="objc"]</p>
+<p>@property (nonatomic, assign) SEL keySortSelector;<br />
+@property (nonatomic, assign) SEL objectSortSelector;<br />
+@property (nonatomic, copy) NSComparator keySortComparator;<br />
+@property (nonatomic, copy) NSComparator objectSortComparator;</p>
+<p>// accessing keys<br />
+- (id)keyAtIndex:(NSUInteger)index;<br />
+- (NSOrderedSet *)allKeys;<br />
+- (NSUInteger)keyCount;</p>
+<p>// accessing objects<br />
+- (id)objectForKeyAtIndex:(NSUInteger)keyIndex objectIndex:(NSUInteger)objIndex;<br />
+- (id)objectForKey:(id)key index:(NSUInteger)index;<br />
+- (NSArray *)allObjectsForKey:(id)key;<br />
+- (NSUInteger)count;</p>
+<p>// adding objects<br />
+- (void)addObject:(id)object forKey:(id&lt;NSCopying&gt;)key;</p>
+<p>// removing objects<br />
+- (void)removeObject:(id)object forKey:(id)key;</p>
+<p>[/code]</p>
+<p>You can see that I've specified 2 ways to sort keys and items.  Since keys are usually strings, it's uber convenient to simply hand the compare: selector to the data structure.  For what I've been working on the items are NSManagedObject subclasses, so I need something a little more powerful to maintain their order, so I can also send in a comparator block in the form:</p>
+<p>[code language="objc"]</p>
+<p>typedef NSComparisonResult (^NSComparator)(id obj1, id obj2);</p>
+<p>[/code]</p>
+<p>Adding and removing objects is as simple as possible with:</p>
+<p>[code language="objc"]</p>
+<p>// adding objects<br />
+- (void)addObject:(id)object forKey:(id&lt;NSCopying&gt;)key;</p>
+<p>// removing objects<br />
+- (void)removeObject:(id)object forKey:(id)key;</p>
+<p>[/code]</p>
+<p>Under the hood:</p>
+<p>Here's the rest of the interface:</p>
+<p>[code language="objc"]<br />
+@interface PZIndexedArray : NSObject<br />
+{<br />
+    @private<br />
+    NSMutableDictionary *dictionary_;<br />
+    NSMutableOrderedSet *orderedKeys_;</p>
+<p>    SEL keySortSelector_;<br />
+    SEL objectSortSelector_;<br />
+    NSComparator keySortComparator_;<br />
+    NSComparator objectSortComparator_;</p>
+<p>    BOOL sortsKeys_;<br />
+    BOOL sortsObjects_;<br />
+    BOOL usesComparatorForKeys_;<br />
+    BOOL usesComparatorForObjects_;<br />
+}<br />
+[/code]</p>
+<p>I'm using two data structures inside the class.  First an NSDictionary that will contain mutable arrays for each key.  Secondly an NSOrderedSet that will also contain every key.  The ordered set will guarantee uniqueness of the keys and provide the ordering I need.  </p>
+<p>You can also see the selectors and comparators being stored.  There's also some flags to know whether the class should try to sort at all (we won't if there's neither a comparator nor a selector).  In the implementation as I have it, the selector will take precedence over the comparator if both are provided for either keys or items.</p>
+<p>The implementation is pretty straightforward.  Setting a comparator or a selector automatically triggers the flags for sorting.  There's a setter for each one, but they all look basically like this:</p>
+<p>[code language="objc"]<br />
+- (void)setKeySortComparator:(NSComparator)keySortComparator<br />
+{<br />
+    if (keySortComparator != keySortComparator_)<br />
+    {<br />
+        [keySortComparator_ release];<br />
+        keySortComparator_ = Block_copy(keySortComparator);<br />
+    }</p>
+<p>    sortsKeys_ = keySortComparator != nil;<br />
+}<br />
+[/code]</p>
+<p>Adding an object for a key is pretty simple.  The mutable array is automatically created if no entry exists for a key.<br />
+[code language="objc"]<br />
+// adding objects<br />
+- (void)addObject:(id)object forKey:(id&lt;NSCopying&gt;)key<br />
+{<br />
+    NSMutableArray *array = [dictionary_ objectForKey:key];<br />
+    if (!array)<br />
+    {<br />
+        array = [NSMutableArray array];<br />
+        [dictionary_ setObject:array forKey:key];</p>
+<p>        if (sortsKeys_)<br />
+        {<br />
+            [self insertKeySorted:key];<br />
+        }<br />
+        else<br />
+        {<br />
+            [orderedKeys_ addObject:key];<br />
+        }<br />
+    }</p>
+<p>    if (sortsObjects_)<br />
+    {<br />
+        [self insertObject:object array:array];<br />
+    }<br />
+    else<br />
+    {<br />
+        [array addObject:object];<br />
+    }<br />
+}<br />
+[/code]</p>
+<p>If there's no sorting the on the keys, the key simply added to the set, otherwise it gets inserted in sorted order.  Same goes for items.  The sorted insert methods are pretty much the same both.  The basic method is to iterate through the array until the object in the enumerator is greater than the object being inserted.<br />
+[code language="objc"]<br />
+- (void)insertKeySorted:(id)key<br />
+{<br />
+    if ([orderedKeys_ count] == 0)<br />
+    {<br />
+        [orderedKeys_ addObject:key];<br />
+        return;<br />
+    }</p>
+<p>    __block NSUInteger insertIndex = -1;<br />
+    __block NSInvocation *selectorInvocation = nil;<br />
+    if (!usesComparatorForKeys_)<br />
+    {<br />
+        selectorInvocation = [NSInvocation invocationWithMethodSignature:[key methodSignatureForSelector:keySortSelector_]];<br />
+        [selectorInvocation setTarget:key];<br />
+        [selectorInvocation setSelector:keySortSelector_];<br />
+    }</p>
+<p>    [orderedKeys_ enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {<br />
+        if (idx  &lt; [orderedKeys_ count])<br />
+        {<br />
+            NSComparisonResult result = NSOrderedAscending;<br />
+            if (usesComparatorForKeys_)<br />
+            {<br />
+                result = self.keySortComparator(key, obj);<br />
+            }<br />
+            else<br />
+            {<br />
+                [selectorInvocation setArgument:&amp;obj atIndex:2];<br />
+                [selectorInvocation invoke];<br />
+                [selectorInvocation getReturnValue:&amp;result];<br />
+            }</p>
+<p>            if (result == NSOrderedAscending)<br />
+            {<br />
+                insertIndex = idx;<br />
+                *stop = YES;<br />
+            }</p>
+<p>        }<br />
+    }];</p>
+<p>    if (insertIndex == -1)<br />
+    {<br />
+        [orderedKeys_ addObject:key];<br />
+    }<br />
+    else<br />
+    {<br />
+        [orderedKeys_ insertObject:key atIndex:insertIndex];<br />
+    }<br />
+}<br />
+[/code]</p>
+<p>The result is adding items from an array into this data structure is much more compact and cleaner than maintaining the data structures yourself:</p>
+<p>[code language="objc"]<br />
+IndexedArray *byName = [[IndexedArray alloc] init];<br />
+byName.keySortSelector = @selector(compare:);<br />
+byName.objectSortComparator = ^NSComparisonResult(Document *doc1, Document *doc2) {<br />
+    return [[doc1.filename firstCharacterAsString] compare:[doc2.filename firstCharacterAsString]];<br />
+};<br />
+// firstCharacterAsString is a category I created.<br />
+[/code]</p>
+<p>And it integrates nicely with the table view datasource methods:<br />
+[code language="objc"]<br />
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView<br />
+{<br />
+    return [categoryIndex keyCount];<br />
+}</p>
+<p>- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section<br />
+{<br />
+    return [categoryIndex allObjectsForKey:[categoryIndex keyAtIndex:section]];<br />
+}</p>
+<p>- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section<br />
+{<br />
+    return [categoryIndex keyAtIndex:section];<br />
+}</p>
+<p>- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath<br />
+{<br />
+    static NSString *identifier = @&quot;cell&quot;;<br />
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];<br />
+    if (cell == nil)<br />
+    {<br />
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];<br />
+    }</p>
+<p>    id item = [categoryIndex objectForKeyAtIndex:indexPath.section objectIndex:indexPath.row];<br />
+    cell.textLabel.text = [item filename];<br />
+    return cell;<br />
+}</p>
+<p>[/code]</p>
+<p>The code for this is posted up <a href="https://github.com/pzearfoss/IndexArray" title="IndexArray on GitHub">GitHub</a>.  Please have a look and feel free to contribute back!</p>

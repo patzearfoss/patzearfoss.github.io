@@ -1,0 +1,44 @@
+---
+layout: post
+title: 'Cappuccino : First Thoughts'
+date: 2011-11-25 09:22:51.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Cappuccino
+- idevblogaday
+tags: []
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1424159270;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Hello to all the readers coming from iDevBlogADay!  I've started working on a project that is being built using <a title="Onward to Objective-J" href="http://www.cappuccino.org">Cappuccino</a>, a web development framework modeled off Objective-c and Cocoa.  After working with it for about 5 days I wanted to scribble down my first impression of the framework and tools.</p>
+<p><strong>Language:</strong></p>
+<p>The language for working with Cappuccino is objective-j.  Objective-j is to javascript what objective-c is to c in that you get object orientedness without it mucking up the foundations of the base language.  <a href="http://cappuccino.org/discuss/2008/12/08/on-leaky-abstractions-and-objective-j/">According to its creators</a>, this is exactly why they chose the smalltalk style syntax of objective-c over other constructs when deciding how to craft their language.</p>
+<p>Coming from iOS development, picking up the syntax was a breeze.  Having had a background with javascript didn't hurt either, but I haven't yet run across any particular problem where I've had to lean on that knowledge to move forward.  Some things are different though and might trip up would be adopters:</p>
+<ol>
+<li><strong>No .h files</strong> - Javascript has no notion of separate compilation (or compilation at all for that matter).  As a result there is no .h file, only your .j which contains your @implementation block.  The @implementation block serves as both the @interface and @implementation from objective-c containing instance variables and full method implementations.</li>
+<li><strong>No properties</strong> - I know there's some haters of the @property directive in the community.  To those folks, I don't know how you ever lived without dot syntax, as it's the one thing I miss from objective-c.  Typing things like [[[self view] subviews] objectAtIndex:0] and the like gets a bit tedious after a while.  That said, you can still have objective-j generate accessors for you with the @accessors directive.    Why the lack of dot syntax?  For the same reason objective-j was chosen: not breaking javascript.  Javascript <em>is </em>object oriented in its own way, so supplanting its existing dot syntax would break the language.</li>
+<li><strong>Variable naming</strong> - iVars in the interface are still named with their type, but without the '*' or pointer to it.  Local variables cannot be typed (probably what still trips me up the most).  The keyword for a local variable is "var" from javascript syntax.  All this really means is that you need to be extra careful naming variables so you know what they are later in code.</li>
+</ol>
+<p><strong>Frameworks:</strong></p>
+<p>I can't help but be impressed with how thorough the Cappuccino folks have been in duplicating the Cocoa frameworks.  Virtually all the foundation classes you might need are there as well as much of the Cocoa UI components.  This is probably the greatest benefit to using Cappuccino is the sheer number of controls available out of the box without having to get into the nitty gritty of HTML and CSS manipulation required to get things like scrolling table view and outline views.  Cappuccino keeps the API to very close to their Cocoa counterparts so using them is easy if you're already familiar.</p>
+<p><strong>Installing:</strong></p>
+<p>To get started learning Cappuccino provides a starter package that let's you play around with the frameworks.  For a full fledged installation, the simplest thing is to build the frameworks from source.  There's an installation script that will download the sources and compile them.  The included jake tool (think make, but for javascript) makes it very simple to build all the frameworks you need and deploy your application later.  All this work is done on the command line, so you'll want to be comfortable in terminal before you dive in.</p>
+<p><strong>Development Tools:</strong></p>
+<p>This is probably where Cappuccino is lacking the most at the moment.  There is an Xcode plugin but I've found it's crashy and unreliable in Xcode 4.  So far the best set of tools I can find are TextMate and Xcode's Interface Builder with XCodeCapp which converts the xib files to cib (Cappuccino interface files) on the fly.  Coda has support for objective-j though I haven't tried it out yet.</p>
+<p>Debugging has its own set of challenges as well.  It's supposedly possible to set breakpoints in either firebug or safari's web developer window, but I haven't seen how to do that yet.  So far console.log has been my best friend for debugging my application.  Additionally, since there is no compiler you don't get the benefit of compiler errors and warnings to help you along.</p>
+<p>I'm hoping the state of the tools improves as Cappuccino chugs closer to 1.0.  I'd love to see a full blown Xcode plugin with code completion, debugging, and building and deployment.  That is a tall order of course, especially when Xcode itself sometimes feels more like a beta than a fully tested application.  280North, the team behind Cappuccino seemed to have something strong going with Atlas, a web based interface builder and IDE, but there hasn't been any movement on that since they were bought out by Motorola a couple of years ago.</p>
+<p><strong>Results</strong>:</p>
+<p>Tools aside, the amount you're able to produce with very little code (especially if using interface builder) is pretty profound.  Having worked on web applications in the past it's refreshing to be able to focus on the logic of the app rather than being worried about the ins and outs of HTML, CSS, and raw javascript.  Cappuccino seems to make intelligent decisions about how rendering a given view should be handled, whether with a div or HTML 5 canvas.  Having a proper abstraction for the DOM is invaluable in this regard and most of the default controls look great right out of the box.</p>
+<p><strong>Conclusion:</strong></p>
+<p>If nothing else it's fantastic to be able to use my objective-c skill set and jump into developing a modern web application quickly using cappuccino.  It requires you to develop your own workflow; it's not as integrated as iOS / Xcode is.  The tools, however, seem to be improving as the Cappuccino approaches 1.0.  In all, I left web development because I didn't like having to deal with both the application logic and HTML/css drudgery simultaneously to get anything done.  Cappuccino solves that problem for me and has allowed to me to produce some promising stuff very quickly.</p>

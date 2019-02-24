@@ -1,0 +1,57 @@
+---
+layout: post
+title: 'Objective-C Quickie : Printing all declared properties of an object'
+date: 2011-04-14 16:55:56.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- objective-c
+- properties
+- runtime
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1352689987;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Here's some quick code that will print the values of all declared properties of an object using some of the introspection features of the runtime.  This assumes that you're using the default getter and setter names:</p>
+<p>[code language="objc"]</p>
+<p>- (NSString *)description<br />
+{<br />
+    NSMutableString *string = [NSMutableString stringWithString:@&quot;&quot;];<br />
+    unsigned int propertyCount;<br />
+    objc_property_t *properties = class_copyPropertyList([self class], &amp;propertyCount);</p>
+<p>    for (unsigned int i = 0; i &lt; propertyCount; i++)<br />
+    {<br />
+        NSString *selector = [NSString stringWithCString:property_getName(properties[i]) encoding:NSUTF8StringEncoding] ;</p>
+<p>        SEL sel = sel_registerName([selector UTF8String]);</p>
+<p>        const char *attr = property_getAttributes(properties[i]);<br />
+        switch (attr[1]) {<br />
+            case '@':<br />
+                [string appendString:[NSString stringWithFormat:@&quot;%s : %@\n&quot;, property_getName(properties[i]), objc_msgSend(self, sel)]];<br />
+                break;<br />
+            case 'i':<br />
+                [string appendString:[NSString stringWithFormat:@&quot;%s : %i\n&quot;, property_getName(properties[i]), objc_msgSend(self, sel)]];<br />
+                break;<br />
+            case 'f':<br />
+                [string appendString:[NSString stringWithFormat:@&quot;%s : %f\n&quot;, property_getName(properties[i]), objc_msgSend(self, sel)]];<br />
+                break;<br />
+            default:<br />
+                break;<br />
+        }<br />
+    }</p>
+<p>    free(properties);</p>
+<p>    return string;</p>
+<p>}<br />
+[/code]</p>
+<p>As you can see, I'm using this so that NSLog will give me something meaningful by overriding the description method of NSObject.<br />
+<strong>Edit:</strong> If you call this from a subclass, this method will only print the properties of the declared type!</p>

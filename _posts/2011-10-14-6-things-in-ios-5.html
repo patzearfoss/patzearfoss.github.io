@@ -1,0 +1,36 @@
+---
+layout: post
+title: 6 Things in iOS 5 That Will Make Your Next Project Easier
+date: 2011-10-14 07:00:08.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- idevblogaday
+- ios
+tags:
+- CoreData
+- CoreImage
+- EventKit
+- ios5
+- UIAppearance
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1510019896;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p><img class="aligncenter" title="ios5" src="{{ site.baseurl }}/assets/update_ios5_20111005.png" alt="" width="86" height="85" /></p>
+<p>There's no shortage of hype around the arrival of iOS5 this week.  Much of it has been about iCloud, ARC, notifications, and Siri of course.  These are big deals to be sure, but for a coder there's some great improvements that simply make your development process easier.  Here's my list of favorites, some of which I've already started using:</p>
+<p><strong>CoreImage and CIFilters</strong> - The addition of the CoreImage framework will give you more ways to create compelling UIs.  CIFiltlers aren't limited just to images.  You can apply them to any CALayer.</p>
+<p><strong>UIAppearance</strong> - It used to be that if you wanted a custom looking UISwitch or or UIProgressView you'd have to implement it from scratch or try and rip the control apart view by view and modify it yourself.  Writing a custom control is of course time consuming and modifying the view hierarchy leaves your UI at the mercy of the next iOS update.  UIAppearance and the appearance proxies let you configure the look of the default controls in ways you couldn't before either on a per instance or hierarchy level, or application wide.</p>
+<p><strong>Container View Controllers</strong> - Absolutely huge, probably my the most useful improvement for me.  It used to be that if you wanted a custom container, like a tab bar or split view, you had to implement it yourself from scratch.  It was always problematic and you often had to hack properties like myParentViewController because the property was locked down.  Now you can make container view controllers and the existing controllers (and containers like UINavigationController) will play nice with them.</p>
+<p><strong>Real locations in the simulator</strong> - You're probably not really at Apple headquarters anyway.  Glad the simulator has finally caught on ;)</p>
+<p><strong>Ordered relationships in CoreData</strong> - If you've ever tried to do this on your own, you know how valuable this can be.  Not only does your "group" have "users", they now have an ordered collection of "users".</p>
+<p><strong>EventKit upgrades </strong>- What strikes me a severe limitation of EventKit is that up until now you can't create calendars in your iOS app.  EventKit upgrades now allow it.</p>

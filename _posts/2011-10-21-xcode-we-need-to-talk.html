@@ -1,0 +1,38 @@
+---
+layout: post
+title: Xcode, We need to talk.
+date: 2011-10-21 21:51:35.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Xcode
+tags:
+- gdb
+- stack trace
+- xcode
+- xcode 4.2
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1362030830;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Dear Xcode:</p>
+<p>I want to like you.  I really do.  But lately I feel as though all I'm doing is putting up with you.  O Xcode, how do I hate thee!  Let me count the ways:</p>
+<ol>
+<li><strong>Least intuitive code-completion . . . ever. </strong> Let's say I'm typing the following:<br />
+[code language="objc"]NSString *aString = [NSStr[/code]</p>
+<p>Why, oh why would you think I want an NSStream?  There's not a single reference to an NSStream in the project.  I'm not sure I've EVER used NSStream.  I can't imagine there's anyone in the world who uses more NSStreams than NSStrings.  Aside from being earlier in an alphabetical sort, there's no reason NSStream should ever appear.  You're smart Xcode, I expect more.</li>
+<li><strong>Please don't make interface builder any slower</strong>.  My sanity can't take it anymore.  Every time I accidentally click on a .xib I might as well go make some coffee, because that's how long it will take to come up.</li>
+<li><strong>And while we're on the topic</strong>.  Why can I drag outlets to class file but I can reference the owner class as itself for things like delegates?  And why do you never know what object I've clicked on?  And why can't I modify the dimensions of a default view?  Xcode, I think interface builder is a bad influence on you.</li>
+<li><strong>GDB Disaster.  </strong>Code completion in GDB: Good idea.  Buggy code completion in GDB.  Awful idea.  I swear this works about 5% of the time that I actually get the object I want in the place I want.  The menu shows when it wants to, but usually it will just drop text in there as it feels like.  Why don't we start by automatically inserting the opening square brace before we try to get clever about code completion here.</li>
+<li><strong>Where's my #@$%ing stack trace.  </strong>I could deal with you Xcode, and all your annoyances until you decided not to give me a stack trace on an unhandled exception.  At least I felt like you were on my side.  Now you're just trying to make my life harder.  I guess you're only willing to work with devs who memorize the addresses of their call stacks.
+<p>[caption id="attachment_244" align="aligncenter" width="300" caption="WTF, Xcode?"]<a href="http://zearfoss.files.wordpress.com/2011/10/wtfxcode.png"><img class="size-medium wp-image-244 " title="WTF is this??" src="{{ site.baseurl }}/assets/wtfxcode.png?w=300" alt="" width="300" height="54" /></a>[/caption]</li>
+</ol>

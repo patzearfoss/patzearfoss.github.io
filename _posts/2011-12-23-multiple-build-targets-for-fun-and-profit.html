@@ -1,0 +1,63 @@
+---
+layout: post
+title: Multiple Build Targets For Fun and Profit
+date: 2011-12-23 21:50:34.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+- Methods
+tags:
+- development
+- schemes
+- targets
+- testing
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1511536634;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>This month <a title="Mindgrub Technologies" href="http://www.mindgrub.com">Mindgrub</a> and <a title="Wheelhouse Analytics" href="http://www.wheelhouseanalytics.com/">Wheelhouse Analytics</a> released <a title="Salesbag on the app store" href="http://itunes.apple.com/us/app/salesbag/id459462562?mt=8&amp;ls=1">Salesbag 1.0</a>, a sales presentation tool geared at the financial services industry. The project represents somewhat of departure for Mindgrub as a consultancy. Most previous projects have been a once-and-done kind of project. For Salesbag we'll be working long-term with Wheelhouse to release frequent updates to the app.</p>
+<p>This presented numerous challenges as 1.0 got out the door and we started work on the first set of updates. Aside from our internal testing team, Wheelhouse has a team of their own. They want to be able to show the app store version off while still testing our updated builds to them. To keep the development and live builds totally separate we decided the best course was to create separate target for the dev version that they would use for their testing. To iPad, these would look like entirely different apps, so we'd never run the chance of damaging the live data during testing. In the rest of this post I'll detail how to create a separate development target for testing purposes some of the added benefits you'll get out of doing this.</p>
+<p><strong>Step 1 - Create a new app id and provisioning profile.</strong></p>
+<p>In the provisioning portal, create a new app id and ad hoc provisioning portal. I assume that everyone reading knows how to do this. For Salesbag we created a com.wheelhouse.salesbagDev app id.</p>
+<p><strong>Step 2 - Create a duplicate target</strong></p>
+<p>Duplicating the target is simple. Simply right click the build target in the project details and select "duplicate".</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/dupe-target.png"><img class="alignnone size-medium wp-image-314" title="dupe target" src="{{ site.baseurl }}/assets/dupe-target.png?w=300" alt="" width="300" height="133" /></a></p>
+<p><strong>Step 3 - Create a duplicate info plist</strong></p>
+<p>In order to use the new app id, we'll need to duplicate and modify the info.plist to include the new app id.</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/dupe-plist.png"><img class="alignnone size-medium wp-image-313" title="dupe plist" src="{{ site.baseurl }}/assets/dupe-plist.png?w=300" alt="" width="300" height="300" /></a></p>
+<p>You can also change other build settings like the bundle display name to make your dev version distinguishable from the production app.</p>
+<p><strong>Step 4 - Modify the target build settings to include the new plist</strong></p>
+<p>The new target must know to use the new the info.plist. Open the build settings for the target, search for info, and change the name of the info.plist.</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/change-plist.png"><img class="alignnone size-medium wp-image-312" title="change plist" src="{{ site.baseurl }}/assets/change-plist.png?w=300" alt="" width="300" height="123" /></a></p>
+<p><strong>Step 5 - Create a new scheme to build the new target</strong></p>
+<p>The last thing to do is to create a new scheme to build the new target. Under the schemes drop down at the top of the Xcode window and select manage schemes to bring up the scheme manager. You select duplicate from the actions (gear) menu at the bottom of the window.</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/dupe-scheme.png"><img class="alignnone size-medium wp-image-311" title="dupe scheme" src="{{ site.baseurl }}/assets/dupe-scheme.png?w=300" alt="" width="300" height="234" /></a></p>
+<p>Once your new scheme is created, click edit to open the new scheme. All you need to do next is replace the old target with your dev target and hit ok (this is in the "build" section).</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/edit-target.png"><img class="alignnone size-medium wp-image-310" title="edit target" src="{{ site.baseurl }}/assets/edit-target.png?w=300" alt="" width="300" height="204" /></a></p>
+<p>You should now see the new scheme in the schemes drop down.</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/new-scheme.png"><img class="alignnone size-medium wp-image-309" title="new scheme" src="{{ site.baseurl }}/assets/new-scheme.png?w=300" alt="" width="300" height="122" /></a></p>
+<p><strong>BONUS - Setup target specific code</strong></p>
+<p>In the dev version of salesbag we added some features for testers to be able to wipe out old data from previous iterations of Salesbag (in our case local eventkit calendars from development on the earlier versions). With your new target you can easily create custom preprocessor directives to dynamically include code in dev versions that you give to your testers.</p>
+<p><strong>Step 1 - Create a new preprocessor macro</strong></p>
+<p>In the build settings for the dev target search for preprocessor and double click the section called Preprocessor Macros under the target. Add a new parameter in here. We chose "DEV_VERSION=1".</p>
+<p><a href="http://zearfoss.files.wordpress.com/2011/12/macro.png"><img class="alignnone size-medium wp-image-308" title="macro" src="{{ site.baseurl }}/assets/macro.png?w=300" alt="" width="300" height="57" /></a></p>
+<p><strong>Step 2 - Use your new macro in code</strong></p>
+<p>To include code specifically for your dev version, simply use the macro you created in step 1:</p>
+<p>[code language="objc"]<br />
+#if DEV_VERSION<br />
+NSLog(@&quot;cool testing feature&quot;);<br />
+#endif<br />
+[/code]</p>
+<p><strong>That's it</strong>!</p>
+<p>Hopefully the process above will help some other developers in their longer term projects.  Also be sure to drop a comment if you have any feedback.  Happy coding!</p>

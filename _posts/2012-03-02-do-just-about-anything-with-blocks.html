@@ -1,0 +1,98 @@
+---
+layout: post
+title: Do Just About Anything With Blocks
+date: 2012-03-02 22:26:47.000000000 -05:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+- idevblogaday
+tags:
+- blocks
+- blockskit
+- collections
+- drawing
+- UIActionSheet
+- UIAlertView
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1515527088;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>I love using blocks in objective-C (and C for that matter).  I think they're the most useful additions to language since . . . well I don't know.  I allows your code to be more compact and more logically grouped (remember UIView animation delegates? yeesh).  In some cases, even faster by backgrounding certain operations with GCD.   Sadly, blocks have only made it into a small portion on the SDKs and frameworks, most notably collection enumeration and the vastly improved UIView animations.  Fortunately there's some enterprising individuals and groups who've created some very good libraries for extending blocks to other parts of the framework.</p>
+<h3>BlocksKit</h3>
+<p><a href="https://github.com/zwaldowski/BlocksKit">BlocksKit</a> is an open source library that allows you to do just about anything with blocks.  You can easily apply blocks as selectors to UIControls, UIGestureRecognizers, and NSTimers.  There are facilities to apply blocks in different ways to collections, and through the use of dynamic delegates you can use blocks in place of delegates on alerts and action sheets.  As a bonus there's some handy utilities for dealing with associated objects too.</p>
+<h3>Block based drawing</h3>
+<p>I've shared this before,but David Hamrick posted a great demo on using blocks to handle drawing on UIViews without the need to subclass.  Find it <a href="http://www.davidhamrick.com/2011/08/07/using-blocks-for-drawing-to-avoid-subclasssing-in-objective-c.html">here</a>.</p>
+<h3>UIAlertView+Blocks:</h3>
+<p>If you don't need everything in BlocksKit, you can check out <a href="https://github.com/jivadevoe/UIAlertView-Blocks">UIAlertView+Blocks</a> which works very nicely for working with alerts and actions sheets without the need for a delegate at all.</p>
+<p><strong>Note</strong>: BlocksKit and the above categories don't play nice together.  You'll need to pick on or the other to avoid some very odd runtime bugs.</p>
+<h2>Some block tips of my own:</h2>
+<h3>Static comparators</h3>
+<p>Apple added block based comparisons for sorting NSArrays.  The block takes 2 objects and returns an NSComparisonResult.  If you find yourself sorting the same thing in multiple places it's often faster to statically declare your comparator that you can reuse.  Let's say we have an array of a custom class person, with strings for first and last name:</p>
+<p>[code language="objc"]</p>
+<p>@interface Person : NSObject<br />
+@property (nonatomic, copy) NSString *firstName, *lastName;<br />
+@end</p>
+<p>[/code]</p>
+<p>Sorting using a block is simple enough, given an array of Person objects:</p>
+<p>[code language="objc"]</p>
+<p>[people sortUsingComparator:^NSComparisonResult(id p1, id p2) {<br />
+if ([[p1 lastName] isEqualToString:[p2 lastName]])<br />
+{<br />
+return [[p1 firstName] caseInsensitiveCompare:[p2 firstName]];<br />
+}<br />
+return [[p1 lastName] caseInsensitiveCompare:[p2 lastName]];<br />
+}];</p>
+<p>[/code]</p>
+<p>If we want to reuse the comparator multiple places, we store it into a static variable:</p>
+<p>[code language="objc"]</p>
+<p>static NSComparator personCompare = ^NSComparisonResult(id p1, id p2) {<br />
+if ([[p1 lastName] isEqualToString:[p2 lastName]])<br />
+{<br />
+return [[p1 firstName] caseInsensitiveCompare:[p2 firstName]];<br />
+}<br />
+return [[p1 lastName] caseInsensitiveCompare:[p2 lastName]];<br />
+};</p>
+<p>// ...</p>
+<p>[people sortUsingComparator:personCompare];</p>
+<p>[/code]</p>
+<p>You can do the same thing with literally any block you want to reuse, but you don't get the benefit capturing scoped variables.</p>
+<h3>Blocks in forms:</h3>
+<p>It's common to have forms made of table cells with text fields for entering user data.  Normally to properly apply the captured data you either have to do some creative work with UIView tags or extend the UITableViewDelegate to hand your new cell type.  You can also use blocks to handle the callback by either adding a block variable to a custom table cell.</p>
+<p>[code language="objc"]</p>
+<p>typedef void(^TextViewEndCallback)(NSString *enteredText);</p>
+<p>@interface MultiLineTextFieldCell : UITableViewCell &lt;UITextViewDelegate&gt;<br />
+{<br />
+UITextView *textView;<br />
+SBTextViewEndCallback textViewEndCallback;<br />
+}<br />
+@property (nonatomic, retain) IBOutlet UITextView *textView;<br />
+- (void)setTextViewEndCallback:(TextViewEndCallback)callback;<br />
+@end</p>
+<p>[/code]</p>
+<p>The above example uses a text view in a table cell.  The table cell should be delegate for the text view.  In the text view delegate method you need only call the block passed into the cell:</p>
+<p>[code language="objc"]</p>
+<p>- (void)textViewDidEndEditing:(UITextView *)textView_<br />
+{<br />
+textViewEndCallback(textView.text);<br />
+}<br />
+[/code]</p>
+<p>This is very easy to use in your cellForRowAtIndexPath method:</p>
+<p>[code language="objc"]</p>
+<p>__block SomeClass *object = [objects objectAtIndex:indexPath.row];</p>
+<p>[cell setTextViewEndCallback:^(NSString *enteredText) {<br />
+object.somestring = enteredText;<br />
+}];</p>
+<p>[/code]</p>
+<p>We used very similar ideas to the above in SalesBag to speed development along.</p>
+<h3>That's it!</h3>
+<p>I enjoy how blocks can speed development along and allows you to write more flexible and sometimes even more reusable code.  Have any cool block tricks?  I'd love to hear them.  Happy Coding!</p>

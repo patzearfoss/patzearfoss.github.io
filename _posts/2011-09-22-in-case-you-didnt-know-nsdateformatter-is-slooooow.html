@@ -1,0 +1,49 @@
+---
+layout: post
+title: In case you didn't know, NSDateFormatter is SLOOOOOW
+date: 2011-09-22 11:57:04.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- calendar
+- dates
+- nscalendar
+- nsdateformatter
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1362030832;}
+  _oembed_2e803e76a1a66e0523d7b971573c648e: "{{unknown}}"
+  _oembed_4a13d8d9fdda65edb249936d59e15108: "{{unknown}}"
+  _oembed_5fb6d0872a6c20c4077d7534fe8dcf21: "{{unknown}}"
+  _oembed_bbe13cc6e163b2488fa03d396b695500: "{{unknown}}"
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>NSDateFormatter is the defacto way of turning dates into strings and strings into dates.  Unfortunately it's also slow as molasses even with reuse and never changing the format string.  This quick tip is about using NSCalendar to handle getting dates from strings, especially in cases where you have to perform a ton of these operations (thousands) in a short amount of time.</p>
+<p>Let's take some dates in a format that looks like this: YYYYMMDDHHMMSS (this is a real example from some work I've been doing).  Also, in this case all months and days are padded with zeros such that 1/1/2010 comes across as 20100101000000.  To turn the string into a date we take the following approach:</p>
+<p>[code language="objc"]</p>
+<p>NSString *yearString = [dateString substringWithRange:NSMakeRange(0, 4)];<br />
+NSString *monthString = [dateString substringWithRange:NSMakeRange(4, 2)];<br />
+NSString *dayString = [dateString substringWithRange:NSMakeRange(6, 2)];<br />
+NSString *hourString = [dateString substringWithRange:NSMakeRange(8, 2)];<br />
+NSString *minString = [dateString substringWithRange:NSMakeRange(10, 2)];<br />
+NSString *secString = [dateString substringWithRange:NSMakeRange(12, 2)];</p>
+<p>NSDateComponents *comps = [[NSDateComponents alloc] init];<br />
+[comps setYear:[yearString intValue]];<br />
+[comps setMonth:[monthString intValue]];<br />
+[comps setDay:[dayString intValue]];<br />
+[comps setHour:[hourString intValue]];<br />
+[comps setMinute:[minString intValue]];<br />
+[comps setSecond:[secString intValue]];<br />
+NSDate *theDate = [[NSCalendar currentCalendar] dateFromComponents:comps];</p>
+<p>[/code]</p>
+<p>Believe it or not the above code cut the time spent formatting dates by about 75% (looking at it through time profiler).</p>

@@ -1,0 +1,40 @@
+---
+layout: post
+title: Objective-C Quickie - Block variables
+date: 2011-04-05 10:21:26.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Code
+tags:
+- animation
+- blocks
+- calayer
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";s:1:"0";s:4:"time";s:10:"1305246339";}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>Blocks are becoming more and more preferred in iOS and Objective-c, with most of the UIView animations becoming block based and methods added to the NS collection classes to use blocks for enumeration.  Blocks can also be stored as variables and used over and over again.  This is immensely useful when subscribing to a DRY method of coding.  </p>
+<p>Below is some code I'm using to apply transformations to CALayers.  I've got three sets of them, and since I simply want to apply the same transformation to them, I can write the block for creating and applying the transformation once, and use it on all three sets:</p>
+<p>[code language="objc"]<br />
+// this is a block variable<br />
+id transBlock = ^(id obj, BOOL *stop)<br />
+{<br />
+    CALayer *layer = (CALayer *)obj;<br />
+    CGAffineTransform trans = CGAffineTransformConcat([layer affineTransform],                                                       CGAffineTransformMakeTranslation(delta * 0.7, 0));<br />
+    [layer setAffineTransform:trans];<br />
+};</p>
+<p>[displayedBars enumerateObjectsUsingBlock:transBlock];<br />
+[displayedBarLabels enumerateObjectsUsingBlock:transBlock];<br />
+[displayedAxisLabels enumerateObjectsUsingBlock:transBlock];</p>
+<p>[/code] </p>

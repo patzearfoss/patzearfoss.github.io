@@ -1,0 +1,40 @@
+---
+layout: post
+title: 'ARC: Cat''s out of the bag'
+date: 2011-06-15 22:24:20.000000000 -04:00
+type: post
+parent_id: '0'
+published: true
+password: ''
+status: publish
+categories:
+- Opinion
+tags:
+- ARC
+- LLVM
+- memory management
+- objective-c
+meta:
+  _edit_last: '684115'
+  reddit: a:2:{s:5:"count";i:0;s:4:"time";i:1352689981;}
+author:
+  login: pzearfoss
+  email: pzearfoss@gmail.com
+  display_name: pzearfoss
+  first_name: ''
+  last_name: ''
+---
+<p>LLVM has posted about the <a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html#meta">new automatic reference counting feature</a> coming in (I assume) future versions of the compiler.  I have a hard time thinking of this as a helpful improvement in dealing with memory in objective-c in a non garbage collected environment:</p>
+<ul>
+<li>It doesn't change the way you think about your allocations.  You still have to place __weak, __strong, or __autoreleased to tell LLVM how you intend to use the declaration.</li>
+<li>If you're already declaring your intentions to the compiler, why not simply go the extra step and follow through.</li>
+<li>The above also holds for the new @autoreleasepool directive to run a local pool.</li>
+</ul>
+<p>I also have a few, more personal reasons for not liking the feature:</p>
+<ul>
+<li>It makes the code uglier: __weak, __strong are not particularly attractive to look at.</li>
+<li>Alongside the above, I feel it's a poor abstraction: In a purely garbage collected environment like java or any scripting language du jour, there's not even a mental model for memory under the hood with the notable exception of scoping rules.  You can simply "new" an object, and it's there until you either null it out or it goes out of scope.  In the case of ARC, you still have to have be somewhat aware of what you're doing, but you don't necessarily need to REALLY understand what's going on under the hood in terms of the retain count and balancing retain release calls.  As I see it, a clearer and more complete understanding is better than a foggier one any day.  This brings me to my next point:</li>
+<li>Understanding and managing your memory makes you a better programmer:  There's something to be said for the level of detail you must think about while working with the memory model in objective-c, and I can't help but that it pervades the entire application process from design to testing.</li>
+<li>Is it really all that hard?  Objective-c provides quite clear ownership rules, and with the reference counting built into NSObject, it's relatively easy to manage memory properly.  Sure, there are plenty of beginner mistakes to be made both with leaking memory and the dreaded EXEC_BAD_ACCESS crash, but now after writing iOS code for a couple years, typing something like [[NSMutableArray array] retain] feels perfectly natural and automatic.</li>
+</ul>
+<p>What are your thoughts on adding ARC to your development workflow?</p>
